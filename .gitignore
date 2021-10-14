@@ -1,0 +1,9 @@
+rollsberi_backend_env
+*.swp
+secure.py
+**/__pycache__
+.env
+**/.env
+test
+.test
+
