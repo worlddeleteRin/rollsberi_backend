@@ -15,7 +15,7 @@ from apps.users.user import get_current_user
 from apps.users.models import BaseUser, BaseUserDB
 # from coupons app
 from apps.coupons.coupon import get_coupon_by_id
-from apps.coupons.models import BaseCoupon
+from apps.coupons.models import BaseCoupon, BaseCouponDB
 
 from bson import json_util
 
@@ -155,21 +155,23 @@ def delete_cart_item(
 @router.post("/{cart_id}/coupons/add") # add coupon to cart
 def add_cart_coupon(
 	request: Request,
-	coupon_code: str,
+	coupon_code: str = Body(..., embed = True),
 	cart: BaseCart = Depends(get_current_cart_active_by_id),
-	coupon: BaseCoupon =  Depends(get_coupon_by_id),
+	current_user: BaseUser = Depends(get_current_user),
 ):
-	return {
-		"status": "success",
-		"coupon_to_apply": coupon_code,
-		"coupon": coupon,
-	}
+	coupon = get_coupon_by_id(request, coupon_code, db_model = True)
+	# check, if user can apply coupon
+	# check, coupon is enable and not expired
+	cart.coupons = []
+	cart.coupons.append(coupon)
+	cart.update_db(request.app.carts_db)
+	return cart.dict()
 
 @router.post("/{cart_id}/coupons/remove") # remove coupon from cart
 def remove_cart_coupon(
 	request: Request,
 	cart: BaseCart = Depends(get_current_cart_active_by_id),
 ):
-	cart.coupons = None
+	cart.coupons = []
 	cart.update_db(request.app.carts_db)
 	return cart

@@ -1,11 +1,12 @@
 from fastapi import Request 
-from .models import BaseCoupon
+from .models import BaseCoupon, BaseCouponDB
 from .coupon_exceptions import CouponNotExist 
 
 def get_coupon_by_id(
 	request: Request,
 	coupon_code: str,
 	silent: bool = False,
+	db_model: bool = False,
 ):
 	coupon_dict = request.app.coupons_db.find_one(
 		{"code": coupon_code}
@@ -14,5 +15,8 @@ def get_coupon_by_id(
 		if not silent:
 			raise CouponNotExist
 		return None
-	coupon = BaseCoupon(**coupon_dict)
+	if not db_model:
+		coupon = BaseCoupon(**coupon_dict)
+	else:
+		coupon = BaseCouponDB(**coupon_dict)
 	return coupon

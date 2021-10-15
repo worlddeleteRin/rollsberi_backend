@@ -9,7 +9,7 @@ from apps.users.user import get_current_admin_user
 from apps.users.models import BaseUser
 
 # models 
-from .models import BaseCoupon
+from .models import BaseCoupon, BaseCouponCreate, BaseCouponDB
 
 router = APIRouter(
 	prefix = "/coupons",
@@ -31,15 +31,15 @@ async def get_coupons(
 @router.post("/")
 async def create_coupon(
 	request: Request,
-	coupon: BaseCoupon,
+	coupon: BaseCouponCreate,
 	admin_user: BaseUser = Depends(get_current_admin_user),
 	):
-
+	new_coupon = BaseCouponDB(**coupon.dict())
 	print('coupon is', coupon)
 	# need to check, if coupon with that id exists
 	# add coupon to db
 	request.app.coupons_db.insert_one(
-		coupon.dict(by_alias=True)
+		new_coupon.dict(by_alias=True)
 	)
 	return {
 		"status": "success",

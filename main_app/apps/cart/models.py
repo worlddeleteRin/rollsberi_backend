@@ -11,7 +11,7 @@ from apps.products.models import BaseProduct
 from apps.products.products import get_product_by_id
 
 # from coupons app
-from apps.coupons.models import BaseCoupon
+from apps.coupons.models import BaseCoupon, BaseCouponDB, CouponTypeEnum
 
 from .cart_exceptions import LineItemNotExist
 
@@ -52,7 +52,7 @@ class BaseCart(BaseModel):
 	# Amount includes taxes, if needed
 	total_amount: int = None # ? float?
 	# list of coupons objects
-	coupons: List[BaseCoupon] = None
+	coupons: List[BaseCoupon] = []
 
 	def count_amount(self):
 		base = 0

@@ -22,13 +22,32 @@ class CouponApplyTo(BaseModel):
 	entity: CouponApplyToEnum
 	ids: List[UUID4]
 
-class BaseCoupon(BaseModel):
+class BaseCouponCreate(BaseModel):
+	name: str
+	description: str = None
+	type: CouponTypeEnum
+	amount: int
+	# specify the min_purchase value, that order need to have to apply coupon
+	min_purchase: int = 0
+	# specify the date, when coupon is expires
+	expires: Optional[datetime] = None
+	enabled: bool = True
+	# unique value, that customer will specify to apply coupon
+	code: str
+	# how many times coupon can be used
+	usage_limit: int = None
+	exclude_sale_items: bool = True
+	products_ids: List[UUID4] = []
+	categories_ids: List[UUID4] = []
 
+class BaseCoupon(BaseModel):
 	""" Base Coupon Model """
 	id: UUID4 = Field(default_factory=uuid.uuid4, alias="_id")
 	date_created: Optional[datetime] = Field(default_factory=datetime.utcnow)
 	# number of times coupon has been used
 	num_uses: int = 0
+	# how many times coupon can be used
+	usage_limit: int = None
 	name: str
 	description: str = None
 
@@ -42,4 +61,11 @@ class BaseCoupon(BaseModel):
 	enabled: bool = True
 	# unique value, that customer will specify to apply coupon
 	code: str
-	applies_to: CouponApplyTo
+	exclude_sale_items: bool = True
+
+	products_ids: List[UUID4] = []
+	categories_ids: List[UUID4] = []
+	# applies_to: CouponApplyTo
+
+class BaseCouponDB(BaseCoupon):
+	used_by: List[UUID4] = []
