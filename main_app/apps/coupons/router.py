@@ -22,8 +22,10 @@ async def get_coupons(
 	request: Request,
 	admin_user: BaseUser = Depends(get_current_admin_user),
 	):
+	coupons_dict = request.app.coupons_db.find({}) # implement pagination
+	coupons = [BaseCoupon(**coupon).dict() for coupon in coupons_dict]
 	return {
-		"status": "success",
+		"coupons": coupons
 	}
 
 @router.post("/")

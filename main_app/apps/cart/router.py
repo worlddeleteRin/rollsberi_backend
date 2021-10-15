@@ -13,9 +13,14 @@ from .cart_exceptions import CartAlreadyExist, CartNotExist, NotValidUUID
 
 from apps.users.user import get_current_user
 from apps.users.models import BaseUser, BaseUserDB
+# from coupons app
+from apps.coupons.coupon import get_coupon_by_id
+from apps.coupons.models import BaseCoupon
+
 from bson import json_util
 
 from .cart import  get_current_cart_active_by_id, get_cart_by_session_id
+
 
 
 
@@ -147,11 +152,24 @@ def delete_cart_item(
 	return cart.dict()
 
 # cart coupons
-@router.post("/{cart_id}/coupons/add")
+@router.post("/{cart_id}/coupons/add") # add coupon to cart
 def add_cart_coupon(
 	request: Request,
 	coupon_code: str,
+	cart: BaseCart = Depends(get_current_cart_active_by_id),
+	coupon: BaseCoupon =  Depends(get_coupon_by_id),
 ):
 	return {
-		"status": "success"
+		"status": "success",
+		"coupon_to_apply": coupon_code,
+		"coupon": coupon,
 	}
+
+@router.post("/{cart_id}/coupons/remove") # remove coupon from cart
+def remove_cart_coupon(
+	request: Request,
+	cart: BaseCart = Depends(get_current_cart_active_by_id),
+):
+	cart.coupons = None
+	cart.update_db(request.app.carts_db)
+	return cart
