@@ -174,4 +174,4 @@ def remove_cart_coupon(
 ):
 	cart.coupons = []
 	cart.update_db(request.app.carts_db)
-	return cart
+	return cart.dict()
