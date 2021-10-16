@@ -78,6 +78,7 @@ class BaseCart(BaseModel):
 
 	def apply_coupons(self, app: FastAPI):
 		print('run apply coupons')
+		promo_discount = 0
 		coupon = self.coupons[0]
 		if (coupon.type == CouponTypeEnum.per_item_discount):
 			# per item discount logic 
@@ -87,6 +88,8 @@ class BaseCart(BaseModel):
 				if coupon.exclude_sale_items and line_item.product.sale_price:
 					continue	
 				line_item.promo_price = line_item.product.get_price() - coupon.amount
+				promo_discount += coupon.amount * line_item.quantity
+			self.promo_discount_amount = promo_discount
 		if (coupon.type == CouponTypeEnum.per_total_discount):
 			pass
 			# per total discount logic
@@ -106,13 +109,13 @@ class BaseCart(BaseModel):
 		for line_item in self.line_items:
 			base += line_item.get_price()
 			discount += line_item.get_sale_price()
-			promo_discount += line_item.get_promo_price()
+			#promo_discount += line_item.get_promo_price()
 		# count total amount 
 		total = base
 		# assign to object vars
 		self.base_amount = base
 		self.discount_amount = discount
-		self.promo_discount_amount = promo_discount
+		#self.promo_discount_amount = promo_discount
 		self.total_amount = total
 
 
