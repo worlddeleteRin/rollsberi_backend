@@ -173,6 +173,13 @@ def add_cart_coupon(
 	cart_coupon: BaseCoupon = BaseCoupon(**coupon.dict())
 	# add coupon to current cart
 	cart.coupons.append(cart_coupon)
+	# check, if coupon can be applied
+	can_apply, msg = cart.check_can_apply_coupons()
+	if not can_apply:
+		return {
+			"is_success": False,
+			"msg": msg,
+		}
 	# count cart amount to apply coupon
 	cart.count_amount(request.app)
 

@@ -66,6 +66,10 @@ class BaseCoupon(BaseModel):
 	products_ids: List[UUID4] = []
 	categories_ids: List[UUID4] = []
 	# applies_to: CouponApplyTo
+	def can_use(self):
+		if self.num_uses > self.usage_limit:
+			return False, "Промокод больше нельзя использовать"
+		return True, ""
 	def check_active(self):
 		if not self.enabled:
 			return False

@@ -59,6 +59,7 @@ class BaseCart(BaseModel):
 	line_items: List[LineItem] = []
 	# amount values
 	# cost of carts content before apply discounts
+	promo_amount: int = None
 	base_amount: int = None # ? or maybe float?
 	# discounted amount
 	discount_amount: int = None # ? float?
@@ -74,13 +75,30 @@ class BaseCart(BaseModel):
 		for line_item in self.line_items:
 			line_item.promo_price = None
 		self.promo_discount_amount = None
+		self.promo_amount = None
 		self.coupons = []
 
+	def check_can_apply_coupons(self):
+		cart_amount = 0
+		coupon = self.coupons[0]
+		can_use, msg = coupon.can_use()
+		if not can_use:
+			return can_use, msg
+		# check cart amount, if can apply
+		for line_item in self.line_items:
+			cart_amount += line_item.get_price()
+		if coupon.min_purchase > cart_amount:
+			return False, "Промокод действует при заказе от "+ str(coupon.min_purchase) + " руб."
+		return True, ""
 	def apply_coupons(self, app: FastAPI):
-		print('run apply coupons')
+		can_apply, msg = self.check_can_apply_coupons()
+		if not can_apply:
+			self.delete_coupons()
+			return False, msg
 		promo_discount = 0
 		coupon = self.coupons[0]
 		if (coupon.type == CouponTypeEnum.per_item_discount):
+			# TODO: apply logic to check, wheather it is products in cart, for whom we can apply promo
 			# per item discount logic 
 			for line_item in self.line_items:
 				if not line_item.product_id in coupon.products_ids:
@@ -91,7 +109,8 @@ class BaseCart(BaseModel):
 				promo_discount += coupon.amount * line_item.quantity
 			self.promo_discount_amount = promo_discount
 		if (coupon.type == CouponTypeEnum.per_total_discount):
-			pass
+			self.promo_amount = coupon.amount	
+			self.promo_discount_amount = coupon.amount
 			# per total discount logic
 		if (coupon.type == CouponTypeEnum.percentage_discount):
 			pass
@@ -112,6 +131,8 @@ class BaseCart(BaseModel):
 			#promo_discount += line_item.get_promo_price()
 		# count total amount 
 		total = base
+		if self.promo_amount and self.promo_amount > 0:
+			total -= self.promo_amount
 		# assign to object vars
 		self.base_amount = base
 		self.discount_amount = discount
@@ -146,11 +167,9 @@ class BaseCart(BaseModel):
 	def add_line_item(self, request, line_item):
 		line_item_exists, exist_line_item = self.check_product_in_cart_exists(line_item)
 		if line_item_exists:
-			print('line item already exists, add quantity')
 			# line_item already exists in cart, need to add quantity
 			exist_line_item.quantity += 1
 			return
-		print('line item not exist, add it')
 		# line item not exists in cart, need to add it
 		product = get_product_by_id(request.app.products_db, line_item.product_id)
 		# add product to the current line_item
@@ -174,8 +193,6 @@ class BaseCart(BaseModel):
 	def remove_line_item(self, carts_db, line_item_id):
 		line_item_exists, line_item = self.check_line_item_exists(line_item_id)
 		if line_item_exists:
-#			print('line item exist, need to delete it')
-#			print('line item is', line_item)
 			self.line_items.remove(line_item)
 			return
 		# line item not exist, raise Exception
