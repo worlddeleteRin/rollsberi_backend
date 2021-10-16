@@ -66,6 +66,10 @@ class BaseCoupon(BaseModel):
 	products_ids: List[UUID4] = []
 	categories_ids: List[UUID4] = []
 	# applies_to: CouponApplyTo
+	def check_active(self):
+		if not self.enabled:
+			return False
+		return True
 
 class BaseCouponDB(BaseCoupon):
 	used_by: List[UUID4] = []

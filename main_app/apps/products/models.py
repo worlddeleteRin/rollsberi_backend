@@ -119,6 +119,10 @@ class BaseProduct(BaseModel):
 	weight: Optional[str] = None
 	categories: List[BaseProductCategory] = []
 
+	def get_price(self):
+		if self.sale_price:
+			return self.sale_price
+		return self.price
 
 	def check_categories(self, categories_db):
 		for indx, category in enumerate(self.categories, start = 0):

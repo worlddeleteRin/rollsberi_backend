@@ -1,3 +1,4 @@
+from fastapi import FastAPI
 import uuid
 from pymongo import ReturnDocument
 from enum import Enum
@@ -30,8 +31,21 @@ class LineItem(BaseModel):
 	id: UUID4 = Field(default_factory=uuid.uuid4, alias="_id")
 	product_id: UUID4
 	quantity: int
+	promo_price: int = None
 	product: BaseProduct = None
 	# variant_id: UUID4
+	def get_price(self):
+		if self.promo_price and self.promo_price > 0:
+			return self.promo_price * self.quantity
+		return self.product.get_price() * self.quantity
+	def get_sale_price(self):
+		if self.product.sale_price:
+			return self.product.sale_price * self.quantity
+		return 0
+	def get_promo_price(self):
+		if self.promo_price:
+			return self.promo_price * self.quantity
+		return 0
 
 
 class BaseCart(BaseModel):
@@ -48,32 +62,65 @@ class BaseCart(BaseModel):
 	base_amount: int = None # ? or maybe float?
 	# discounted amount
 	discount_amount: int = None # ? float?
+	# promo discount amount
+	promo_discount_amount: int = None
 	# sum of line-items amount, minus cart-level discounts and coupons.
 	# Amount includes taxes, if needed
 	total_amount: int = None # ? float?
 	# list of coupons objects
 	coupons: List[BaseCoupon] = []
 
-	def count_amount(self):
+	def delete_coupons(self):
+		for line_item in self.line_items:
+			line_item.promo_price = None
+		self.promo_discount_amount = None
+		self.coupons = []
+
+	def apply_coupons(self, app: FastAPI):
+		print('run apply coupons')
+		coupon = self.coupons[0]
+		if (coupon.type == CouponTypeEnum.per_item_discount):
+			# per item discount logic 
+			for line_item in self.line_items:
+				if not line_item.product_id in coupon.products_ids:
+					continue	
+				if coupon.exclude_sale_items and line_item.product.sale_price:
+					continue	
+				line_item.promo_price = line_item.product.get_price() - coupon.amount
+		if (coupon.type == CouponTypeEnum.per_total_discount):
+			pass
+			# per total discount logic
+		if (coupon.type == CouponTypeEnum.percentage_discount):
+			pass
+			# percentage discount logic
+
+	def count_amount(self, app: FastAPI):
 		base = 0
 		discount = 0
+		promo_discount = 0
 		total = 0
+		# apply coupons, if they are exists
+		if len(self.coupons) > 0:
+			self.apply_coupons(app)
 		# count base and discount amount
 		for line_item in self.line_items:
-			base += line_item.product.price * line_item.quantity
-			if line_item.product.sale_price:
-				discount += (line_item.product.price - line_item.product.sale_price) * line_item.quantity
+			base += line_item.get_price()
+			discount += line_item.get_sale_price()
+			promo_discount += line_item.get_promo_price()
 		# count total amount 
-		total = base - discount
+		total = base
 		# assign to object vars
 		self.base_amount = base
 		self.discount_amount = discount
+		self.promo_discount_amount = promo_discount
 		self.total_amount = total
+
 
 	def delete_db(self, carts_db):
 		carts_db.delete_one(
 			{"_id": self.id}
 		)
+
 	def update_db(self, carts_db):
 		# maybe need improvement to recast object with updated_cart return info
 		updated_cart = carts_db.find_one_and_update(
@@ -81,7 +128,6 @@ class BaseCart(BaseModel):
 			{"$set": self.dict(by_alias=True)},
 			return_document=ReturnDocument.AFTER
 		)
-		print('updated cart is', updated_cart)
 
 	def check_line_item_exists(self, line_item_id):
 		for line_item in self.line_items:

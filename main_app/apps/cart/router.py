@@ -93,7 +93,7 @@ async def create_cart(
 	for line_item in line_items:
 		cart.add_line_item(request, line_item)
 	# count cart amount 
-	cart.count_amount()
+	cart.count_amount(request.app)
 	# add new cart to db
 	request.app.carts_db.insert_one(
 		cart.dict(by_alias=True)
@@ -120,7 +120,7 @@ def add_cart_items(
 	"""
 	for line_item in line_items:
 		cart.add_line_item(request, line_item)
-	cart.count_amount()
+	cart.count_amount(request.app)
 	cart.update_db(request.app.carts_db)
 	return cart.dict()
 
@@ -134,7 +134,7 @@ def update_cart_item(
 		cart: BaseCart = Depends(get_current_cart_active_by_id)
 	):
 	cart.update_line_item(request.app.carts_db, item_id, line_item)
-	cart.count_amount()
+	cart.count_amount(request.app)
 	cart.update_db(request.app.carts_db)
 	return cart.dict()
 
@@ -147,7 +147,7 @@ def delete_cart_item(
 		cart: BaseCart = Depends(get_current_cart_active_by_id)
 	):
 	cart.remove_line_item(request.app.carts_db, item_id)
-	cart.count_amount()
+	cart.count_amount(request.app)
 	cart.update_db(request.app.carts_db)
 	return cart.dict()
 
@@ -159,19 +159,36 @@ def add_cart_coupon(
 	cart: BaseCart = Depends(get_current_cart_active_by_id),
 	current_user: BaseUser = Depends(get_current_user),
 ):
-	coupon = get_coupon_by_id(request, coupon_code, db_model = True)
+	coupon: BaseCouponDB = get_coupon_by_id(request, coupon_code, db_model = True)
+	print('coupon is', coupon)
 	# check, if user can apply coupon
 	# check, coupon is enable and not expired
+	is_active: bool = coupon.check_active()	
+	if not is_active:
+		return {
+			"is_success": False,
+			"msg": "Промокод не активный",
+		}
 	cart.coupons = []
-	cart.coupons.append(coupon)
+	cart_coupon: BaseCoupon = BaseCoupon(**coupon.dict())
+	# add coupon to current cart
+	cart.coupons.append(cart_coupon)
+	# count cart amount to apply coupon
+	cart.count_amount(request.app)
+
 	cart.update_db(request.app.carts_db)
-	return cart.dict()
+	return {
+		"is_success": True,
+		"msg": "Промокод успешно применен",
+		"cart": cart.dict(),
+	}
 
 @router.post("/{cart_id}/coupons/remove") # remove coupon from cart
 def remove_cart_coupon(
 	request: Request,
 	cart: BaseCart = Depends(get_current_cart_active_by_id),
 ):
-	cart.coupons = []
+	cart.delete_coupons()
+	cart.count_amount(request.app)
 	cart.update_db(request.app.carts_db)
 	return cart.dict()
