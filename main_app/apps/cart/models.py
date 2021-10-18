@@ -109,6 +109,13 @@ class BaseCart(BaseModel):
 
 		return True, ""
 
+	def check_item_can_apply_coupon(self, item, coupon):
+		if not item.product_id in coupon.products_ids:
+			return False
+		if coupon.exclude_sale_items and item.product.sale_price:
+			return False
+		return True
+
 	def apply_coupons(self, app: FastAPI):
 		can_apply, msg = self.check_can_apply_coupons()
 		if not can_apply:
@@ -119,11 +126,9 @@ class BaseCart(BaseModel):
 		# per item discount logic 
 		if (coupon.type == CouponTypeEnum.per_item_discount):
 			for line_item in self.line_items:
-				if not line_item.product_id in coupon.products_ids:
-					continue	
-				if coupon.exclude_sale_items and line_item.product.sale_price:
-					continue	
-				can_apply += 1
+				item_can_apply = self.check_item_can_apply_coupon(line_item, coupon)
+				if not item_can_apply:
+					continue
 				line_item.promo_price = line_item.product.get_price() - coupon.amount
 				promo_discount += coupon.amount * line_item.quantity
 			self.promo_discount_amount = promo_discount
@@ -134,11 +139,9 @@ class BaseCart(BaseModel):
 		# percentage discount logic
 		if (coupon.type == CouponTypeEnum.percentage_discount):
 			for line_item in self.line_items:
-				if not line_item.product_id in coupon.products_ids:
+				item_can_apply = self.check_item_can_apply_coupon(line_item, coupon)
+				if not item_can_apply:
 					continue	
-				if coupon.exclude_sale_items and line_item.product.sale_price:
-					continue	
-				can_apply += 1
 				line_item.promo_price = line_item.product.get_price() - int((line_item.product.get_price() * coupon.amount) / 100 )
 				promo_discount += int((line_item.product.get_price() * coupon.amount) / 100) * line_item.quantity
 			self.promo_discount_amount = promo_discount
