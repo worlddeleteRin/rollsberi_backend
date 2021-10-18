@@ -46,7 +46,7 @@ class LineItem(BaseModel):
 		return 0
 	def get_promo_discount(self):
 		if self.promo_price:
-			return int(self.product.get_price() - self.promo_price)
+			return int(self.product.get_price() - self.promo_price) * self.quantity
 		return 0
 
 
@@ -125,8 +125,8 @@ class BaseCart(BaseModel):
 					continue	
 				if coupon.exclude_sale_items and line_item.product.sale_price:
 					continue	
-				line_item.promo_price = int(line_item.product.get_price() - ((line_item.product.get_price() * coupon.amount) / 100 ))
-				promo_discount += int(((line_item.product.get_price() * coupon.amount) / 100) * line_item.quantity)
+				line_item.promo_price = line_item.product.get_price() - int((line_item.product.get_price() * coupon.amount) / 100 )
+				promo_discount += int((line_item.product.get_price() * coupon.amount) / 100) * line_item.quantity
 			self.promo_discount_amount = promo_discount
 		# gift discount 
 		if (coupon.type == CouponTypeEnum.gift):
@@ -134,7 +134,6 @@ class BaseCart(BaseModel):
 				{"_id": {"$in": coupon.products_ids}}
 			)
 			gift_products = [BaseProduct(**product).dict() for product in gift_products_dict]
-			print('gift producsts are', gift_products)
 			self.coupon_gifts = []
 			self.coupon_gifts += gift_products
 
