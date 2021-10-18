@@ -13,6 +13,7 @@ class CouponTypeEnum(str, Enum):
 	per_item_discount = "per_item_discount"
 	per_total_discount = "per_total_discount"
 	percentage_discount = "percentage_discount"
+	gift = "gift"
 
 class CouponApplyToEnum(str, Enum):
 	products = "products"

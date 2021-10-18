@@ -70,8 +70,6 @@ class BaseCart(BaseModel):
 	total_amount: int = None # ? float?
 	# list of coupons objects
 	coupons: List[BaseCoupon] = []
-	# gift products
-	coupon_gifts: List[BaseProduct] = []
 
 	def delete_coupons(self):
 		for line_item in self.line_items:
@@ -79,7 +77,6 @@ class BaseCart(BaseModel):
 		self.promo_discount_amount = None
 		self.promo_amount = None
 		self.coupons = []
-		self.coupon_gifts = []
 
 	def check_can_apply_coupons(self):
 		cart_amount = 0
@@ -118,14 +115,9 @@ class BaseCart(BaseModel):
 		if (coupon.type == CouponTypeEnum.percentage_discount):
 			pass
 			# percentage discount logic
-		if (coupon.type == CouponTypeEnum.gift):
-			gift_products_dict = app.products_db.find(
-				{"_id": {"$in": coupon.products_ids}}
-			)
-			gift_products = [BaseProduct(**product).dict() for product in gift_products_dict]
-			print('gift producsts are', gift_products)
-			self.coupon_gifts = []
-			self.coupon_gifts += gift_products
+		if (coupon.type == CouponTypeEnum.percentage_discount):
+			pass
+			# percentage discount logic
 
 	def count_amount(self, app: FastAPI):
 		base = 0
