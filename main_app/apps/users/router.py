@@ -13,7 +13,7 @@ from config import settings
 
 from .models import BaseUser, BaseUserDB, BaseUserCreate, BaseUserVerify, BaseUserUpdate, BaseUserUpdatePassword, Token, TokenData, BaseUserExistVerified, BaseUserRestore, BaseUserRestoreVerify, UserDeliveryAddress, UserDeleteDeliveryAddress
 # models 
-from .user import get_current_active_user, get_current_user, get_user, authenticate_user, get_user_register, get_user_verify, get_user_restore, get_user_restore_verify, get_current_admin_user, search_users_by_username
+from .user import get_current_active_user, get_current_user, get_user, authenticate_user, get_user_register, get_user_verify, get_user_restore, get_user_restore_verify, get_current_admin_user, search_users_by_username, get_user_delivery_addresses
 
 from .password import get_password_hash
 
@@ -222,10 +222,7 @@ async def user_delivery_addresses(
 		request: Request,
 		current_user: BaseUserDB = Depends(get_current_active_user)
 	):
-	delivery_addresses = request.app.users_addresses_db.find(
-		{"user_id": current_user.id}
-	)
-	addresses = [UserDeliveryAddress(**address).dict() for address in delivery_addresses]
+	addresses = get_user_delivery_addresses(request.app, current_user.id)
 	return addresses
 
 
@@ -235,12 +232,14 @@ async def create_user_delivery_address(
 	new_address: UserDeliveryAddress,
 	current_user: BaseUserDB = Depends(get_current_active_user)
 	):
+	print('current user is', current_user)
 	new_address.user_id = current_user.id
 	print('new address is', new_address)
 	request.app.users_addresses_db.insert_one(
 		new_address.dict(by_alias=True)
 	)
-	return await user_delivery_addresses(request, current_user)
+	print('added new address')
+	return get_user_delivery_addresses(request.app, current_user.id)
 
 @router.delete("/me/delivery-address")
 async def delete_user_delivery_address(
@@ -251,7 +250,7 @@ async def delete_user_delivery_address(
 	request.app.users_addresses_db.delete_one(
 		{"_id": delete_address.id}
 	)
-	return await user_delivery_addresses(request, current_user)
+	return get_user_delivery_addresses(request.app, current_user.id)
 
 @router.get("/me/orders/")
 async def user_orders(
@@ -289,10 +288,7 @@ async def user_delivery_addresses(
 		user_id: UUID4,
 		admin_user = Depends(get_current_admin_user),
 	):
-	delivery_addresses = request.app.users_addresses_db.find(
-		{"user_id": user_id}
-	)
-	addresses = [UserDeliveryAddress(**address).dict() for address in delivery_addresses]
+	addresses = get_user_delivery_addresses(request.app, user_id)
 	return addresses
 
 @router.post("/{user_id}/delivery-address")

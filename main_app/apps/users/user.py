@@ -1,9 +1,9 @@
-from fastapi import Depends, Request
+from fastapi import Depends, Request, FastAPI
 from pydantic import UUID4
 from jose import JWTError, jwt
 
 
-from .models import BaseUser, BaseUserDB, Token, TokenData, BaseUserCreate, BaseUserVerify, BaseUserRestore, BaseUserRestoreVerify, UserDeliveryAddress
+from .models import BaseUser, BaseUserDB, Token, TokenData, BaseUserCreate, BaseUserVerify, BaseUserRestore, BaseUserRestoreVerify, UserDeliveryAddress, UserDeliveryAddress
 from config import settings
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
@@ -132,12 +132,17 @@ def get_user_restore_verify(request: Request, user_info: BaseUserRestoreVerify):
 	request.app.users_db.update_one({"_id": user.id}, {"$set": user.dict(by_alias=True)})
 	return BaseUser(**user.dict())
 
+def get_user_delivery_addresses(app: FastAPI, user_id: UUID4):
+	addresses_dict = app.users_addresses_db.find(
+		{"user_id": user_id}
+	)
+	addresses = [UserDeliveryAddress(**address).dict() for address in addresses_dict]
+	return addresses
+
 def get_user_delivery_address_by_id(users_addresses_db, delivery_address_id):
-	print('delivery address is', delivery_address_id)
 	address_dict = users_addresses_db.find_one(
 		{ "_id": delivery_address_id }
 	)
-	print('address dict is', address_dict)
 	if not address_dict:
 		raise UserDeliveryAddressNotExist
 	address = UserDeliveryAddress(**address_dict)
