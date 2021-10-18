@@ -34,6 +34,8 @@ class LineItem(BaseModel):
 	promo_price: int = None
 	product: BaseProduct = None
 	# variant_id: UUID4
+	def get_base_price(self):
+		return self.product.price * self.quantity
 	def get_price(self):
 		if self.promo_price and self.promo_price > 0:
 			return self.promo_price * self.quantity
@@ -42,9 +44,9 @@ class LineItem(BaseModel):
 		if self.product.sale_price:
 			return self.product.sale_price * self.quantity
 		return 0
-	def get_promo_price(self):
+	def get_promo_discount(self):
 		if self.promo_price:
-			return self.promo_price * self.quantity
+			return int(self.product.get_price() - self.promo_price)
 		return 0
 
 
@@ -82,6 +84,7 @@ class BaseCart(BaseModel):
 		self.coupon_gifts = []
 
 	def check_can_apply_coupons(self):
+		# TODO: add logic to check, wheather it is products in cart, for whom we can apply promo
 		cart_amount = 0
 		coupon = self.coupons[0]
 		can_use, msg = coupon.can_use()
@@ -93,6 +96,7 @@ class BaseCart(BaseModel):
 		if coupon.min_purchase > cart_amount:
 			return False, "Промокод действует при заказе от "+ str(coupon.min_purchase) + " руб."
 		return True, ""
+
 	def apply_coupons(self, app: FastAPI):
 		can_apply, msg = self.check_can_apply_coupons()
 		if not can_apply:
@@ -100,9 +104,8 @@ class BaseCart(BaseModel):
 			return False, msg
 		promo_discount = 0
 		coupon = self.coupons[0]
+		# per item discount logic 
 		if (coupon.type == CouponTypeEnum.per_item_discount):
-			# TODO: apply logic to check, wheather it is products in cart, for whom we can apply promo
-			# per item discount logic 
 			for line_item in self.line_items:
 				if not line_item.product_id in coupon.products_ids:
 					continue	
@@ -111,13 +114,21 @@ class BaseCart(BaseModel):
 				line_item.promo_price = line_item.product.get_price() - coupon.amount
 				promo_discount += coupon.amount * line_item.quantity
 			self.promo_discount_amount = promo_discount
+		# per total discount logic
 		if (coupon.type == CouponTypeEnum.per_total_discount):
 			self.promo_amount = coupon.amount	
 			self.promo_discount_amount = coupon.amount
-			# per total discount logic
+		# percentage discount logic
 		if (coupon.type == CouponTypeEnum.percentage_discount):
-			pass
-			# percentage discount logic
+			for line_item in self.line_items:
+				if not line_item.product_id in coupon.products_ids:
+					continue	
+				if coupon.exclude_sale_items and line_item.product.sale_price:
+					continue	
+				line_item.promo_price = int(line_item.product.get_price() - ((line_item.product.get_price() * coupon.amount) / 100 ))
+				promo_discount += int(((line_item.product.get_price() * coupon.amount) / 100) * line_item.quantity)
+			self.promo_discount_amount = promo_discount
+		# gift discount 
 		if (coupon.type == CouponTypeEnum.gift):
 			gift_products_dict = app.products_db.find(
 				{"_id": {"$in": coupon.products_ids}}
@@ -137,11 +148,11 @@ class BaseCart(BaseModel):
 			self.apply_coupons(app)
 		# count base and discount amount
 		for line_item in self.line_items:
-			base += line_item.get_price()
+			base += line_item.get_base_price()
 			discount += line_item.get_sale_price()
-			#promo_discount += line_item.get_promo_price()
+			promo_discount += line_item.get_promo_discount()
 		# count total amount 
-		total = base
+		total = base - discount - promo_discount
 		if self.promo_amount and self.promo_amount > 0:
 			total -= self.promo_amount
 		# assign to object vars
