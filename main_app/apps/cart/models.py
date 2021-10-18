@@ -40,9 +40,9 @@ class LineItem(BaseModel):
 		if self.promo_price and self.promo_price > 0:
 			return self.promo_price * self.quantity
 		return self.product.get_price() * self.quantity
-	def get_sale_price(self):
+	def get_sale_discount(self):
 		if self.product.sale_price:
-			return self.product.sale_price * self.quantity
+			return (self.product.price - self.product.sale_price) * self.quantity
 		return 0
 	def get_promo_discount(self):
 		if self.promo_price:
@@ -95,6 +95,18 @@ class BaseCart(BaseModel):
 			cart_amount += line_item.get_price()
 		if coupon.min_purchase > cart_amount:
 			return False, "Промокод действует при заказе от "+ str(coupon.min_purchase) + " руб."
+		if coupon.type in [CouponTypeEnum.per_item_discount, CouponTypeEnum.percentage_discount]:
+			no_apply_msg = "В коризне нет товаров, к которым применим данный промокод"
+			can_apply = 0
+			for line_item in self.line_items:	
+				if not line_item.product_id in coupon.products_ids:
+					continue	
+				if coupon.exclude_sale_items and line_item.product.sale_price:
+					continue	
+				can_apply += 1
+			if can_apply == 0:
+				return False, no_apply_msg
+
 		return True, ""
 
 	def apply_coupons(self, app: FastAPI):
@@ -111,6 +123,7 @@ class BaseCart(BaseModel):
 					continue	
 				if coupon.exclude_sale_items and line_item.product.sale_price:
 					continue	
+				can_apply += 1
 				line_item.promo_price = line_item.product.get_price() - coupon.amount
 				promo_discount += coupon.amount * line_item.quantity
 			self.promo_discount_amount = promo_discount
@@ -125,6 +138,7 @@ class BaseCart(BaseModel):
 					continue	
 				if coupon.exclude_sale_items and line_item.product.sale_price:
 					continue	
+				can_apply += 1
 				line_item.promo_price = line_item.product.get_price() - int((line_item.product.get_price() * coupon.amount) / 100 )
 				promo_discount += int((line_item.product.get_price() * coupon.amount) / 100) * line_item.quantity
 			self.promo_discount_amount = promo_discount
@@ -148,7 +162,7 @@ class BaseCart(BaseModel):
 		# count base and discount amount
 		for line_item in self.line_items:
 			base += line_item.get_base_price()
-			discount += line_item.get_sale_price()
+			discount += line_item.get_sale_discount()
 			promo_discount += line_item.get_promo_discount()
 		# count total amount 
 		total = base - discount - promo_discount
