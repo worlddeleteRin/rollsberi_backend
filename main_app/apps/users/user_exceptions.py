@@ -5,6 +5,11 @@ class IncorrectUsernameOrPassword(HTTPException):
 		self.status_code = 400
 		self.detail = "incorrect username os password"
 
+class NotSendVerificationCode(HTTPException):
+	def __init__(self):
+		self.status_code = 400
+		self.detail = "Не уалось отправить код на данный номер"
+
 class IncorrectVerificationCode(HTTPException):
 	def __init__(self):
 		self.status_code = 400
