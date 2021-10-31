@@ -44,11 +44,12 @@ async def send_order_admin_notification(order: BaseOrder):
 			msg += f"Адрес доставки: {order.guest_delivery_address} \n"
 	if order.delivery_method.id == 'pickup':
 		msg += f"Пункт выдачи: {order.pickup_address.name} \n"
-	msg += f"Сумма без скидки: {order.base_amount} \n"
-	msg += f"Сумма скидки: {order.discount_amount} \n"
-	msg += f"Сумма заказа: *{order.total_amount}* \n"
+	msg += f"Сумма без скидки: {order.cart.base_amount} \n"
+	msg += f"Сумма скидки: {order.cart.discount_amount} \n"
+	msg += f"Скидка по промокоду: {order.cart.promo_discount_amount} \n"
+	msg += f"Сумма заказа: *{order.cart.total_amount}* \n"
 	msg += f"{'-'*5} Состав заказа {'-'*5} \n"
-	for index, item in enumerate(order.line_items):
+	for index, item in enumerate(order.cart.line_items):
 		msg+= f"{index + 1}. {item.product.name} - {item.quantity} шт. \n"
 
 
