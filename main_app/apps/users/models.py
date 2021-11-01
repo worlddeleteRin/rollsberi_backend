@@ -22,7 +22,7 @@ class UserDeliveryAddress(BaseModel):
 		Base User delivery model
 	"""
 	id: UUID4 = Field(default_factory=uuid.uuid4, alias="_id")
-	user_id: UUID4 = None
+	user_id: Optional[UUID4] = None
 	city: Optional[str] = ""
 	street: str
 	house_number: str
@@ -54,7 +54,7 @@ class BaseUser(BaseModel):
 	id: UUID4 = Field(default_factory=uuid.uuid4, alias="_id")
 	date_created: Optional[datetime] = Field(default_factory=datetime.utcnow)
 	email: Optional[str] = ""
-	username: Optional[str] = None
+	username: str
 	is_active: Optional[bool] = False
 	is_superuser: Optional[bool] = False
 	is_verified: Optional[bool] = False

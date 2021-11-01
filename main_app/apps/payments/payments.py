@@ -4,17 +4,19 @@ from .payment_exceptions import PaymentMethodNotExist
 import uuid
 from config import settings
 
+from database.main_db import db_provider
 
-def get_payment_methods(payments_db):
-	payment_methods_dict = payments_db.find({})
+
+def get_payment_methods():
+	payment_methods_dict = db_provider.payment_methods_db.find({})
 	if not payment_methods_dict:
 		return None
 	payment_methods = [PaymentMethod(**p_method).dict() for p_method in payment_methods_dict]
 	return payment_methods
 
-def get_payment_method_by_id(payments_db, payment_method_id):
+def get_payment_method_by_id(payment_method_id) -> PaymentMethod:
 	payment_method = None
-	payment_method = payments_db.find_one(
+	payment_method = db_provider.payment_methods_db.find_one(
 		{"_id": payment_method_id}
 	)
 	if not payment_method:

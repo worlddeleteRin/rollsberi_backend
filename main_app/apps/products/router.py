@@ -17,126 +17,131 @@ from .products import get_product_by_id, get_category_by_id, search_products_by_
 
 from apps.users.user import get_current_admin_user
 
+from database.main_db import db_provider
+
 router = APIRouter(
-	prefix = "/products",
-	tags = ["products"],
-	# responses ? 
+    prefix = "/products",
+    tags = ["products"],
+    # responses ? 
 )
 
 # categories
 @router.get("/categories")
 async def get_categories(request: Request):
-	categories_dict = request.app.mongodb["categories"].find({})
-	categories = [BaseCategory(**category).dict() for category in categories_dict]
-	return {
-		"status": "success",
-		"categories": categories,
-	}
+    categories_dict = db_provider.categories_db.find({})
+    categories = [BaseCategory(**category).dict() for category in categories_dict]
+    return {
+        "status": "success",
+        "categories": categories,
+    }
 
 @router.get("/categories/{category_id}")
 async def get_category(
-	request: Request,
-	category_id: UUID4,
+    category_id: UUID4,
 ):
-	category = get_category_by_id(request.app.categories_db, category_id)
-	return category.dict()
+    category = get_category_by_id(category_id)
+    if category:
+        return category.dict()
 
 @router.post("/categories")
 async def create_category(
-	request: Request,
-	category: BaseCategoryCreate,
-	admin_user = Depends(get_current_admin_user),
+    request: Request,
+    category: BaseCategoryCreate,
+    admin_user = Depends(get_current_admin_user),
 ):
-	new_category = BaseCategory(**category.dict())
-	new_category.insert_db(request.app.categories_db)
-	return new_category.dict()
+    new_category = BaseCategory(**category.dict())
+    new_category.insert_db()
+    return new_category.dict()
 
 @router.patch("/categories/{category_id}")
 async def update_category(
-	request: Request,
-	category_id: UUID4,
-	new_category: BaseCategoryUpdate,
+    request: Request,
+    category_id: UUID4,
+    new_category: BaseCategoryUpdate,
 ):
-	category_to_update = get_category_by_id(request.app.categories_db, category_id)
-	updated_model = category_to_update.copy(update = {**new_category.dict(exclude_unset=True)})
-	updated_category = updated_model.update_db(request.app.categories_db)
-	return updated_category.dict()
+    category_to_update = get_category_by_id(category_id)
+    updated_model = category_to_update.copy(update = {**new_category.dict(exclude_unset=True)})
+    updated_category = updated_model.update_db()
+    return updated_category.dict()
 
 @router.delete("/categories/{category_id}")
 async def delete_category(
-	request: Request,
-	category_id: UUID4,
+    request: Request,
+    category_id: UUID4,
 ):
-	category = get_category_by_id(request.app.categories_db, category_id)
-	category.delete_db(request.app.categories_db)
-	return {
-		"status": "success"
-	}
+    category = get_category_by_id(category_id)
+    if not category:
+        return {
+            "status": "failure",
+            "msg": "category not exists"
+        }
+    category.delete_db()
+    return {
+        "status": "success"
+    }
 
 # products
-
 @router.get("/")
-async def get_products(request: Request):
-	products_dict = request.app.mongodb["products"].find({})
-	products = [BaseProduct(**product).dict() for product in products_dict]
-	return {
-		"status": "success",
-		"products": products,
-	}
+async def get_products():
+    products_dict = db_provider.products_db.find({})
+    products = [BaseProduct(**product).dict() for product in products_dict]
+    return {
+        "status": "success",
+        "products": products,
+    }
 
 @router.get("/search")
 async def search_products(
-	request: Request,
-	search: str
+    request: Request,
+    search: str
 ):
-	if not search:
-		return []
-	products = search_products_by_name(request.app.products_db, search)
-	return products
+    if not search:
+        return []
+    products = search_products_by_name(search)
+    return products
 
 @router.get("/{product_id}")
 async def get_product(
-	request: Request,
-	product_id: UUID4,
+    product_id: UUID4,
 ):
-	product = get_product_by_id(request.app.products_db, product_id)
-	return product.dict()
+    product = get_product_by_id(product_id)
+    if product:
+        return product.dict()
 
 @router.post("/")
 async def create_product(
-	request: Request,
-	product: BaseProductCreate,
+    product: BaseProductCreate,
 ):
-	new_product = BaseProduct(**product.dict())
-	new_product.insert_db(request.app)
-	return new_product.dict()
+    new_product = BaseProduct(**product.dict())
+    new_product.insert_db()
+    return new_product.dict()
 
 @router.patch("/{product_id}")
 async def update_product(
-	request: Request,
-	product_id: UUID4,
-	new_product: BaseProductUpdate,
+    request: Request,
+    product_id: UUID4,
+    new_product: BaseProductUpdate,
 ):
-	product_to_update = get_product_by_id(request.app.products_db, product_id)
-#	print('new product is', new_product)
-	updated = product_to_update.copy(update = {**new_product.dict(exclude_unset=True)})
-	updated_model = BaseProduct(**updated.dict(by_alias=True))
-#	print('updated model is', updated_model)
-	updated_product = updated_model.update_db(request)
-#	print('updated product is', updated_product)
-	if updated_product:
-		return updated_product.dict()
-	else:
-		return None
+    product_to_update = get_product_by_id(product_id)
+#   print('new product is', new_p:roduct)
+    updated = product_to_update.copy(update = {**new_product.dict(exclude_unset=True)})
+    updated_model = BaseProduct(**updated.dict(by_alias=True))
+#   print('updated model is', updated_model)
+    updated_product = updated_model.update_db(request)
+#   print('updated product is', updated_product)
+    if updated_product:
+        return updated_product.dict()
+    else:
+        return None
 
 @router.delete("/{product_id}")
 async def delete_product(
-	request: Request,
-	product_id: UUID4,
+    request: Request,
+    product_id: UUID4,
 ):
-	product = get_product_by_id(request.app.products_db, product_id)
-	product.delete_db(request.app.products_db)
-	return {
-		"status": "success"
-	}
+    product = get_product_by_id(product_id)
+    product.delete_db()
+    return {
+        "status": "success"
+    }
 

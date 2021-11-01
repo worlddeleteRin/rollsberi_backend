@@ -11,6 +11,8 @@ from apps.users.models import BaseUser
 # models 
 from .models import BaseCoupon, BaseCouponCreate, BaseCouponDB
 
+from database.main_db import db_provider
+
 router = APIRouter(
 	prefix = "/coupons",
 	tags = ["coupons"],
@@ -19,10 +21,9 @@ router = APIRouter(
 
 @router.get("/")
 async def get_coupons(
-	request: Request,
 	admin_user: BaseUser = Depends(get_current_admin_user),
 	):
-	coupons_dict = request.app.coupons_db.find({}) # implement pagination
+	coupons_dict = db_provider.coupons_db.find({}) # implement pagination
 	coupons = [BaseCoupon(**coupon).dict() for coupon in coupons_dict]
 	return {
 		"coupons": coupons
@@ -30,7 +31,6 @@ async def get_coupons(
 
 @router.post("/")
 async def create_coupon(
-	request: Request,
 	coupon: BaseCouponCreate,
 	admin_user: BaseUser = Depends(get_current_admin_user),
 	):
@@ -38,7 +38,7 @@ async def create_coupon(
 	print('coupon is', coupon)
 	# need to check, if coupon with that id exists
 	# add coupon to db
-	request.app.coupons_db.insert_one(
+	db_provider.coupons_db.insert_one(
 		new_coupon.dict(by_alias=True)
 	)
 	return {

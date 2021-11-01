@@ -1,12 +1,13 @@
 from fastapi import Security
 from fastapi.security.api_key import APIKeyHeader
-from fastapi import Request, HTTPException
+from fastapi import HTTPException
+
+from database.main_db import db_provider
 
 def get_api_app_client(
-	request: Request,
 	api_key_header:str = Security(APIKeyHeader(name="app_token"))
 ):
-	app_client_dict = request.app.app_clients_db.find_one(
+	app_client_dict = db_provider.app_clients_db.find_one(
 		{"access_token": api_key_header}
 	)
 	print('api key query is', api_key_header)

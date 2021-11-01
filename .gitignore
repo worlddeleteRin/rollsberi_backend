@@ -6,4 +6,5 @@ secure.py
 **/.env
 test
 .test
+pyrightconfig.json
 

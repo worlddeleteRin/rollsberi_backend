@@ -3,13 +3,13 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     app_name: str = "Some app name"
-    JWT_SECRET_KEY: str = None
+    JWT_SECRET_KEY: str = ''
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 1
-    JWT_SESSION_KEY: str = None
+    JWT_SESSION_KEY: str = ''
     JWT_SESSION_TOKEN_EXPIRE_MINUTES: int = 1
     JWT_ALGORITHM: str = "HS256"
-    DB_URL: str = None
-    DB_NAME: str = None
+    DB_URL: str = ''
+    DB_NAME: str = ''
     DEBUG_MODE: bool = True
     send_order_notifications: bool = False
     # telegram section

@@ -8,6 +8,8 @@ from .jwt_session import create_session_token, decode_token
 
 from pydantic import UUID4
 
+from database.main_db import db_provider
+
 
 def create_session_id():
 	session_token = uuid.uuid4()
@@ -18,8 +20,8 @@ def create_session_id():
 #	)
 	return session_token
 
-def get_cart_by_session_id(carts_db, session_id: uuid.UUID, silent=False):
-	cart = carts_db.find_one(
+def get_cart_by_session_id( session_id: uuid.UUID, silent=False):
+	cart = db_provider.carts_db.find_one(
 		{"session_id": session_id}
 	)
 	if not cart:
@@ -30,9 +32,9 @@ def get_cart_by_session_id(carts_db, session_id: uuid.UUID, silent=False):
 	return cart
 
 
-def get_cart_by_id(request: Request, cart_id: uuid.UUID, link_products: bool = True, silent: bool = False):
+def get_cart_by_id(cart_id: uuid.UUID, link_products: bool = True, silent: bool = False):
 #	print('cart id is', cart_id)
-	cart = request.app.carts_db.find_one(
+	cart = db_provider.carts_db.find_one(
 		{"_id": cart_id}
 	)
 #	print('cart is', cart)
@@ -47,7 +49,7 @@ def get_cart_by_id(request: Request, cart_id: uuid.UUID, link_products: bool = T
 def get_current_cart_active_by_id(cart: BaseCart = Depends(get_cart_by_id)):
 	return cart
 
-def delete_session_cart(carts_db, session_id: UUID4):
-		cart = get_cart_by_session_id(carts_db, session_id, silent=True)
+def delete_session_cart(session_id: UUID4):
+		cart = get_cart_by_session_id(session_id, silent=True)
 		if cart:
-			cart.delete_db(carts_db)
+			cart.delete_db()

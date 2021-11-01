@@ -5,16 +5,18 @@ from enum import Enum
 
 from typing import Optional, List
 
-from pydantic import UUID4, BaseModel, Field, validator
-from datetime import datetime, date
+from pydantic import UUID4, BaseModel, Field
+from datetime import datetime
 
 from apps.products.models import BaseProduct
 from apps.products.products import get_product_by_id
 
 # from coupons app
-from apps.coupons.models import BaseCoupon, BaseCouponDB, CouponTypeEnum
+from apps.coupons.models import BaseCoupon, CouponTypeEnum
 
 from .cart_exceptions import LineItemNotExist
+
+from database.main_db import db_provider
 
 
 class SessionId(BaseModel):
@@ -30,12 +32,13 @@ class LineItemUpdate(BaseModel):
 class LineItem(BaseModel):
     id: UUID4 = Field(default_factory=uuid.uuid4, alias="_id")
     product_id: UUID4
-    quantity: int
-    promo_price: int = None
-    product: BaseProduct = None
+    quantity: int = 1
+    promo_price: Optional[int]
+    product: BaseProduct
     # variant_id: UUID4
     def get_base_price(self):
-        return self.product.price * self.quantity
+        if self.product:
+            return self.product.price * self.quantity
     def get_price(self):
         if self.promo_price and self.promo_price > 0:
             return self.promo_price * self.quantity
@@ -48,8 +51,8 @@ class LineItem(BaseModel):
         if self.promo_price:
             return int(self.product.get_price() - self.promo_price) * self.quantity
         return 0
-    def attach_product(self, app: FastAPI):
-        product = get_product_by_id(app.products_db, self.product_id) 
+    def attach_product(self):
+        product = get_product_by_id(self.product_id) 
         if product:
             self.product = product
 
@@ -58,23 +61,23 @@ class LineItem(BaseModel):
 class BaseCart(BaseModel):
     """ Base Cart Model """
     id: UUID4 = Field(default_factory=uuid.uuid4, alias="_id")
-    user_id: UUID4 = None
-    session_id: UUID4 = None
-    customer_id: UUID4 = None
+    user_id: Optional[UUID4] = None
+    session_id: Optional[UUID4] = None
+    customer_id: Optional[UUID4] = None
     date_created: Optional[datetime] = Field(default_factory=datetime.utcnow)
     date_modified: Optional[datetime] = Field(default_factory=datetime.utcnow)
     line_items: List[LineItem] = []
     # amount values
-    promo_amount: int = None
+    promo_amount: Optional[int] = None
     # cost of carts content before apply discounts
-    base_amount: int = None # ? or maybe float?
+    base_amount: Optional[int] = None # ? or maybe float?
     # discounted amount (sum of products sale price)
-    discount_amount: int = None # ? float?
+    discount_amount: Optional[int] = None # ? float?
     # promo discount amount (coupons applied discount amount)
-    promo_discount_amount: int = None
+    promo_discount_amount: Optional[int] = None
     # sum of line-items amount, minus cart-level discounts and coupons.
     # Amount includes taxes, if needed
-    total_amount: int = None # ? float?
+    total_amount: Optional[int] = None # ? float?
     # list of coupons objects
     coupons: List[BaseCoupon] = []
     # gift products
@@ -121,7 +124,7 @@ class BaseCart(BaseModel):
             return False
         return True
 
-    def apply_coupons(self, app: FastAPI):
+    def apply_coupons(self):
         can_apply, msg = self.check_can_apply_coupons()
         if not can_apply:
             self.delete_coupons()
@@ -152,21 +155,21 @@ class BaseCart(BaseModel):
             self.promo_discount_amount = promo_discount
         # gift discount 
         if (coupon.type == CouponTypeEnum.gift):
-            gift_products_dict = app.products_db.find(
+            gift_products_dict = db_provider.products_db.find(
                 {"_id": {"$in": coupon.products_ids}}
             )
-            gift_products = [BaseProduct(**product).dict() for product in gift_products_dict]
-            self.coupon_gifts = []
+            gift_products: List[BaseProduct] = [BaseProduct(**product) for product in gift_products_dict]
+            self.coupon_gifts.clear()
             self.coupon_gifts += gift_products
 
-    def count_amount(self, app: FastAPI):
+    def count_amount(self):
         base = 0
         discount = 0
         promo_discount = 0
         total = 0
         # apply coupons, if they are exists
         if len(self.coupons) > 0:
-            self.apply_coupons(app)
+            self.apply_coupons()
         # count base and discount amount
         for line_item in self.line_items:
             base += line_item.get_base_price()
@@ -183,18 +186,19 @@ class BaseCart(BaseModel):
         self.total_amount = total
 
 
-    def delete_db(self, carts_db):
-        carts_db.delete_one(
+    def delete_db(self):
+        db_provider.carts_db.delete_one(
             {"_id": self.id}
         )
 
-    def update_db(self, carts_db):
+    def update_db(self):
         # maybe need improvement to recast object with updated_cart return info
-        updated_cart = carts_db.find_one_and_update(
+        updated_cart = db_provider.carts_db.find_one_and_update(
             {"_id": self.id},
             {"$set": self.dict(by_alias=True)},
             return_document=ReturnDocument.AFTER
         )
+        return updated_cart
 
     def check_line_item_exists(self, line_item_id):
         for line_item in self.line_items:
@@ -207,46 +211,45 @@ class BaseCart(BaseModel):
                 return True, line_item
         return False, None
 
-    def add_line_item(self, request, line_item):
+    def add_line_item(self, line_item):
         line_item_exists, exist_line_item = self.check_product_in_cart_exists(line_item)
-        if line_item_exists:
+        if line_item_exists and exist_line_item:
             # line_item already exists in cart, need to add quantity
             exist_line_item.quantity += 1
             return
         # line item not exists in cart, need to add it
-        product = get_product_by_id(request.app.products_db, line_item.product_id)
+        product = get_product_by_id(line_item.product_id)
         # add product to the current line_item
         line_item.product = product
         self.line_items.append(line_item)
 
-    def remove_line_item_quantity(self, carts_db, line_item_id):
+    def remove_line_item_quantity(self, line_item_id):
         line_item_exists, line_item = self.check_line_item_exists(line_item_id)
-        if line_item_exists:
+        if line_item_exists and line_item:
             if line_item.quantity == 1:
                 self.line_items.remove(line_item)
                 return
             else:
                 line_item.quantity -= 1
                 return
-            self.line_items.remove(line_item)
-            return
         # line item not exist, raise Exception
         raise LineItemNotExist
 
-    def remove_line_item(self, carts_db, line_item_id):
+    def remove_line_item(self, line_item_id):
         line_item_exists, line_item = self.check_line_item_exists(line_item_id)
-        if line_item_exists:
+        if line_item_exists and line_item:
             self.line_items.remove(line_item)
             return
         # line item not exist, raise Exception
         raise LineItemNotExist
-    def update_line_item(self, carts_db, line_item_id: str, new_line_item: LineItemUpdate):
+    def update_line_item(self, line_item_id: UUID4, new_line_item: LineItemUpdate):
         line_item_exists, line_item = self.check_line_item_exists(line_item_id)
         if not line_item_exists:
             raise LineItemNotExist
-        line_item.__dict__.update(**new_line_item.dict())
-        if line_item.quantity < 1:
-            self.line_items.remove(line_item)
+        if line_item:
+            line_item.__dict__.update(**new_line_item.dict())
+            if line_item.quantity < 1:
+                self.line_items.remove(line_item)
 
     def set_modified(self):
         self.date_modified = datetime.utcnow()

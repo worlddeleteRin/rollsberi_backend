@@ -23,6 +23,8 @@ from apps.payments.models import PaymentMethod
 from apps.delivery.models import DeliveryMethod
 from apps.site.models import PickupAddress
 
+from database.main_db import db_provider
+
 
 class OrderStatus(BaseModel):
     id: str
@@ -91,33 +93,33 @@ class OrderStatusEnum(str, Enum):
     cancelled = "cancelled"
 
 class BaseOrderCreate(BaseModel):
-    line_items: List[LineItem] = []
-    customer_id: UUID4 = None
-    customer_ip_address: str = None
+    line_items: Optional[List[LineItem]] = []
+    customer_id: Optional[UUID4] = None
+    customer_ip_address: Optional[str] = None
     # associated session_id
-    customer_session_id: UUID4 = None
+    customer_session_id: Optional[UUID4] = None
     # associated cart_id
-    cart_id: UUID4 = None
+    cart_id: Optional[UUID4] = None
     # payment method id 
-    payment_method: str = None
+    payment_method: Optional[str] = None
     # delivery_method id
-    delivery_method: str = None
+    delivery_method: Optional[str] = None
     # user_delivery_address id, if delivery method is 'delivery'
-    delivery_address: UUID4 = None
+    delivery_address: Optional[UUID4] = None
     # guest delivery address
-    guest_delivery_address: str = None
+    guest_delivery_address: Optional[str] = None
     # guest phone number
-    guest_phone_number: str = None
+    guest_phone_number: Optional[str] = None
     # pickup_address id, if delivery_method is 'pickup'
-    pickup_address: UUID4 = None
+    pickup_address: Optional[UUID4] = None
     # list of coupons objects
-    coupons: List[str] = None
+    coupons: Optional[List[str]] = []
     # custom customer message, provided for order
-    custom_message: str = None
+    custom_message: Optional[str] = None
 
 class BaseOrderUpdate(BaseModel):
     status_id: OrderStatusEnum
-    status: OrderStatus = None
+    status: Optional[OrderStatus] = None
 
     def set_status(self):
         self.status = order_statuses[self.status_id]
@@ -126,14 +128,14 @@ class BaseOrder(BaseModel):
     """ Base Order Model """
     id: UUID4 = Field(default_factory=uuid.uuid4, alias="_id")
     # id of cart, that was converted to order
-    cart_id: UUID4 = None
+    cart_id: Optional[UUID4] = None
     # attached cart to order
-    cart: BaseCart = None
+    cart: Optional[BaseCart] = None
     # id of the customer, that makes order, or, that is assigned to the order by admin
-    customer_id: UUID4 = None
+    customer_id: Optional[UUID4] = None
     # customer username
-    customer_username: str = None
-    customer_ip_address: str = None
+    customer_username: Optional[str] = None
+    customer_ip_address: Optional[str] = None
 
     status: OrderStatus = order_statuses["awaiting_confirmation"]
 #   status: OrderStatusEnum = OrderStatusEnum.awaiting_confirmation
@@ -141,48 +143,47 @@ class BaseOrder(BaseModel):
     date_created: Optional[datetime] = Field(default_factory=datetime.utcnow)
     date_modified: Optional[datetime] = Field(default_factory=datetime.utcnow)
     # payment method id 
-    payment_method: PaymentMethod = None
+    payment_method: Optional[PaymentMethod] = None
     # delivery_method id
-    delivery_method: DeliveryMethod = None
+    delivery_method: Optional[DeliveryMethod] = None
 
     # user_delivery_address object, if delivery method is 'delivery'
-    delivery_address: UserDeliveryAddress = None
+    delivery_address: Optional[UserDeliveryAddress] = None
     # guest delivery adderss
-    guest_delivery_address: str = None
+    guest_delivery_address: Optional[str] = None
     # guest phone number
-    guest_phone_number: str = None
+    guest_phone_number: Optional[str] = None
     # pickup_address id, if delivery_method is 'pickup'
-    pickup_address: PickupAddress = None
+    pickup_address: Optional[PickupAddress] = None
     # list of coupons objects
-    coupons: List[str] = None
+    coupons: Optional[List[str]] = None
     # custom customer message, provided for order
-    custom_message: str = None
+    custom_message: Optional[str] = None
 
-    def check_set_user(self, app):
+    def check_set_user(self):
         if not self.customer_id:
             return
-        user = get_user_by_id(app.users_db, self.customer_id)
+        user = get_user_by_id(self.customer_id)
         if not user:
             return
         self.customer_username = user.username
 
-    def save_db(self, orders_db):
-        saved = orders_db.insert_one(
+    def save_db(self):
+        db_provider.orders_db.insert_one(
             self.dict(by_alias=True)
         )
-    def delete_db(self, orders_db):
-        orders_db.delete_one(
+    def delete_db(self):
+        db_provider.orders_db.delete_one(
             {"_id": self.id}
         )
-    def update_db(self, orders_db):
+    def update_db(self):
         # maybe need improvement to recast object with updated_order return info
-        updated_order_dict = orders_db.find_one_and_update(
+        updated_order_dict = db_provider.orders_db.find_one_and_update(
             {"_id": self.id},
             {"$set": self.dict(by_alias=True)},
             return_document=ReturnDocument.AFTER
         )
         updated_order = BaseOrder(**updated_order_dict)
-        print('updated order is', updated_order)
         return updated_order
 
     def set_modified(self):
