@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     # smsc section
     smsc_login: str = ""
     smsc_password: str = ""
+    # base static url
+    base_static_url: str = ""
 
 
     class Config:

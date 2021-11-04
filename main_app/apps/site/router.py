@@ -10,7 +10,7 @@ import uuid
 # import config (env variables)
 from config import settings
 
-from .models import PickupAddress, StockItem
+from .models import PickupAddress, StockItem, MenuLink
 
 from .delivery_pickup import get_pickup_addresses
 from apps.payments.payments import get_payment_methods
@@ -61,6 +61,24 @@ def get_checkout_common_info(
 		"delivery_methods": delivery_methods,
 		"payment_methods": payment_methods,
 		"pickup_addresses": pickup_addresses,
+	}
+
+@router.get('/common-info')
+def get_common_info(
+):
+	menu_links_cursor = db_provider.menu_links_db.find({}).sort("display_order", 1)
+	menu_links = [MenuLink(**menu_link).dict() for menu_link in menu_links_cursor]
+	#print('menu links are', menu_links)
+	location_address = "Здесь будет адрес доставки"
+	delivery_phone = "+79781111111"
+	delivery_phone_display = "7 978 111 11 11"
+	main_logo_link = settings.base_static_url + "main_logo.png"
+	return {
+		"main_logo_link": main_logo_link,
+	 	"menu_links": menu_links,
+		"location_address": location_address,
+		"delivery_phone": delivery_phone,
+		"delivery_phone_display": delivery_phone_display,
 	}
 
 @router.get("/stocks")

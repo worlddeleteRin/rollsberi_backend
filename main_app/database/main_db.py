@@ -29,29 +29,10 @@ class DbProvider(BaseModel):
     order_statuses_db: Collection
     stocks_db: Collection
     app_clients_db: Collection
+    menu_links_db: Collection
 
     class Config:
         arbitrary_types_allowed = True
-
-    """
-    def __init__(self, db_client: MongoClient, db_main: Database):
-        self.db_client = db_client
-        self.db_main = db_main
-        # assign all collection names
-        self.users_db = db_main["users"]
-        self.users_addresses_db = db_main["users_addresses"]
-        self.products_db = db_main["products"]
-        self.categories_db = db_main["categories"]
-        self.carts_db = db_main["carts"]
-        self.coupons_db = db_main["coupons"]
-        self.orders_db = db_main["orders"]
-        self.payment_methods_db = db_main["payment_methods"]
-        self.delivery_methods_db = db_main["delivery_methods"]
-        self.pickup_addresses_db = db_main["pickup_addresses"]
-        self.order_statuses_db = db_main["order_statuses"]
-        self.stocks_db = db_main["stocks"]
-        self.app_clients_db = db_main["app_clients"]
-    """
 
       
 
@@ -77,6 +58,7 @@ def setup_db_main() -> DbProvider:
                 order_statuses_db = db_main["order_statuses"],
                 stocks_db = db_main["stocks"],
                 app_clients_db = db_main["app_clients"],
+                menu_links_db = db_main["menu_links"]
             )
     return db_provider
 
