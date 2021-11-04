@@ -70,10 +70,12 @@ async def delete_cart(
 
 @router.post("/{session_id}")
 async def create_cart(
+        request: Request,
         session_id: uuid.UUID,
         line_items: List[LineItem] = Body(..., embed=True),
-        token: str = None,
+        # token: str = None,
     ):
+    print('request is', request)
     """
         Create a cart for currently logged in user
         ---------------

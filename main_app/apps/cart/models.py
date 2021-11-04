@@ -34,7 +34,7 @@ class LineItem(BaseModel):
     product_id: UUID4
     quantity: int = 1
     promo_price: Optional[int]
-    product: BaseProduct
+    product: Optional[BaseProduct]
     # variant_id: UUID4
     def get_base_price(self):
         if self.product:
@@ -42,14 +42,18 @@ class LineItem(BaseModel):
     def get_price(self):
         if self.promo_price and self.promo_price > 0:
             return self.promo_price * self.quantity
-        return self.product.get_price() * self.quantity
+        if self.product:
+            return self.product.get_price() * self.quantity
+        return 0
     def get_sale_discount(self):
-        if self.product.sale_price:
-            return (self.product.price - self.product.sale_price) * self.quantity
+        if self.product:
+            if self.product.sale_price:
+                return (self.product.price - self.product.sale_price) * self.quantity
         return 0
     def get_promo_discount(self):
-        if self.promo_price:
-            return int(self.product.get_price() - self.promo_price) * self.quantity
+        if self.product:
+            if self.promo_price:
+                return int(self.product.get_price() - self.promo_price) * self.quantity
         return 0
     def attach_product(self):
         product = get_product_by_id(self.product_id) 
@@ -107,6 +111,8 @@ class BaseCart(BaseModel):
             no_apply_msg = "В коризне нет товаров, к которым применим данный промокод"
             can_apply = 0
             for line_item in self.line_items:   
+                if not line_item.product:
+                    continue
                 if not line_item.product_id in coupon.products_ids:
                     continue    
                 if coupon.exclude_sale_items and line_item.product.sale_price:
@@ -137,6 +143,8 @@ class BaseCart(BaseModel):
                 item_can_apply = self.check_item_can_apply_coupon(line_item, coupon)
                 if not item_can_apply:
                     continue
+                if not line_item.product:
+                    continue
                 line_item.promo_price = line_item.product.get_price() - coupon.amount
                 promo_discount += coupon.amount * line_item.quantity
             self.promo_discount_amount = promo_discount
@@ -150,6 +158,8 @@ class BaseCart(BaseModel):
                 item_can_apply = self.check_item_can_apply_coupon(line_item, coupon)
                 if not item_can_apply:
                     continue    
+                if not line_item.product:
+                    continue
                 line_item.promo_price = line_item.product.get_price() - int((line_item.product.get_price() * coupon.amount) / 100 )
                 promo_discount += int((line_item.product.get_price() * coupon.amount) / 100) * line_item.quantity
             self.promo_discount_amount = promo_discount
