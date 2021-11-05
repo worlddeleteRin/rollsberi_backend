@@ -91,7 +91,7 @@ async def register_user(
     """
         Get username, password
     """
-
+    print('run register method')
     # need to send verification sms code, and, save it to user database field
     is_success, code =  smsc_send_call_code(
         smsc_login = settings.smsc_login,
@@ -103,7 +103,8 @@ async def register_user(
         print("не удалось отправить код подтверждения")
         raise NotSendVerificationCode
     # save otp code to user model
-    user_to_register.otp = code
+    # code = 1234
+    user_to_register.otp = str(code)
     # db logic to insert user
     db_provider.users_db.insert_one(user_to_register.dict(by_alias=True))
     # eof db logic to insert user
@@ -144,7 +145,7 @@ async def restore_user(
     # eof db logic to insert user
     return {
         "status": "success",
-        "otp": code,
+        "otp": 123,
     }
 
 @router.post("/register-verify")

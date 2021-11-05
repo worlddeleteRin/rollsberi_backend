@@ -9,7 +9,7 @@ from database.main_db import db_provider
 class PickupAddress(BaseModel):
     id: UUID4 = Field(default_factory=uuid.uuid4, alias="_id")
     name: str
-    info: str = None
+    info: Optional[str]
 
     def save_db(self):
         db_provider.pickup_addresses_db.insert_one(
@@ -19,7 +19,7 @@ class PickupAddress(BaseModel):
 class StockItem(BaseModel):
     id: UUID4 = Field(default_factory=uuid.uuid4, alias="_id")
     title: str
-    description: str = None
+    description: Optional[str]
     imgsrc: List[str] = []
 
     def save_db(self):
@@ -32,3 +32,10 @@ class MenuLink(BaseModel):
     link_name: Optional[str]
     link_path: Optional[str] 
     display_order: Optional[int] = 0
+
+
+class MainSliderItem(BaseModel):
+    id: UUID4 = Field(default_factory=uuid.uuid4, alias="_id")
+    link_path: Optional[str] 
+    display_order: Optional[int] = 0
+    imgsrc: str

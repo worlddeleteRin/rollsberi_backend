@@ -10,7 +10,7 @@ import uuid
 # import config (env variables)
 from config import settings
 
-from .models import PickupAddress, StockItem, MenuLink
+from .models import PickupAddress, StockItem, MenuLink, MainSliderItem
 
 from .delivery_pickup import get_pickup_addresses
 from apps.payments.payments import get_payment_methods
@@ -81,6 +81,16 @@ def get_common_info(
 		"delivery_phone_display": delivery_phone_display,
 	}
 
+# get main sliders
+@router.get("/main-sliders")
+def get_main_sliders(
+):
+    main_sliders_cursor = db_provider.main_sliders_db.find({})
+    main_sliders = [MainSliderItem(**slider).dict() for slider in main_sliders_cursor]
+    return main_sliders
+
+
+# get stocks
 @router.get("/stocks")
 def get_stocks(
 ):
@@ -88,7 +98,8 @@ def get_stocks(
 	stocks = [StockItem(**stock).dict() for stock in stocks_dict]
 	return {
 		"stocks": stocks,
-	}
+    }
+# add stock
 @router.post("/stocks")
 def create_stock(
 	stock: StockItem,

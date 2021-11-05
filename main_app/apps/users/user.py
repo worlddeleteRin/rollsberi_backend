@@ -74,9 +74,8 @@ def get_current_admin_user(current_user: BaseUser = Depends(get_current_user)):
     return current_user
 
 
-def get_user_register(user_create_object: BaseUserCreate):
-    user_info = user_create_object.dict()
-    user = db_provider.users_db.find_one({"username": user_info["username"]})
+def get_user_register(user_info: BaseUserCreate):
+    user = db_provider.users_db.find_one({"username": user_info.username})
     # if user exist and verified, we raise exist exception
     if user:
         user = BaseUser(**user)
@@ -88,8 +87,8 @@ def get_user_register(user_create_object: BaseUserCreate):
             #print('found user when register, but it is not verified, so, delete it')
             db_provider.users_db.delete_one({"_id": user.id})
 
-    user_info["hashed_password"] = get_password_hash(user_info["password"])
-    user_to_register = BaseUserDB(**user_info)
+    hashed_password = get_password_hash(user_info.password)
+    user_to_register = BaseUserDB(**user_info.dict(), hashed_password = hashed_password)
     return user_to_register
 
 def get_user_restore(user_info: BaseUserRestore) -> BaseUserDB:
