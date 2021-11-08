@@ -25,7 +25,7 @@ class CouponApplyTo(BaseModel):
 
 class BaseCouponCreate(BaseModel):
 	name: str
-	description: str = None
+	description: Optional[str] = None
 	type: CouponTypeEnum
 	amount: int
 	# specify the min_purchase value, that order need to have to apply coupon
@@ -36,7 +36,7 @@ class BaseCouponCreate(BaseModel):
 	# unique value, that customer will specify to apply coupon
 	code: str
 	# how many times coupon can be used
-	usage_limit: int = None
+	usage_limit: Optional[int] = None
 	exclude_sale_items: bool = True
 	products_ids: List[UUID4] = []
 	categories_ids: List[UUID4] = []
@@ -48,9 +48,9 @@ class BaseCoupon(BaseModel):
 	# number of times coupon has been used
 	num_uses: int = 0
 	# how many times coupon can be used
-	usage_limit: int = None
+	usage_limit: Optional[int] = None
 	name: str
-	description: str = None
+	description: Optional[str] = None
 
 	type: CouponTypeEnum # = CouponTypeEnum.per_item_discount
 	# discount, that is need to be applied
@@ -68,7 +68,7 @@ class BaseCoupon(BaseModel):
 	categories_ids: List[UUID4] = []
 	# applies_to: CouponApplyTo
 	def can_use(self):
-		if self.num_uses > self.usage_limit:
+		if self.usage_limit and self.num_uses > self.usage_limit:
 			return False, "Промокод больше нельзя использовать"
 		return True, ""
 	def check_active(self):

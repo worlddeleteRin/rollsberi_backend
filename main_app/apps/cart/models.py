@@ -96,7 +96,6 @@ class BaseCart(BaseModel):
         self.coupon_gifts = []
 
     def check_can_apply_coupons(self):
-        # TODO: add logic to check, wheather it is products in cart, for whom we can apply promo
         cart_amount = 0
         coupon = self.coupons[0]
         can_use, msg = coupon.can_use()
