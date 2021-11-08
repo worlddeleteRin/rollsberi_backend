@@ -112,8 +112,6 @@ class BaseOrderCreate(BaseModel):
     guest_phone_number: Optional[str] = None
     # pickup_address id, if delivery_method is 'pickup'
     pickup_address: Optional[UUID4] = None
-    # list of coupons objects
-    coupons: Optional[List[str]] = []
     # custom customer message, provided for order
     custom_message: Optional[str] = None
 
@@ -155,8 +153,6 @@ class BaseOrder(BaseModel):
     guest_phone_number: Optional[str] = None
     # pickup_address id, if delivery_method is 'pickup'
     pickup_address: Optional[PickupAddress] = None
-    # list of coupons objects
-    coupons: Optional[List[str]] = None
     # custom customer message, provided for order
     custom_message: Optional[str] = None
 

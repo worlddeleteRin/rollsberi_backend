@@ -146,6 +146,7 @@ def update_order(
 
 @router.post("/")
 def create_order(
+    request: Request,
     new_order: BaseOrderCreate,
     # background task
     background_task: BackgroundTasks,
@@ -161,6 +162,8 @@ def create_order(
     # assign user to order, if user is simple user
     order.customer_id = current_user.id
     order.customer_username = current_user.username
+    # add customer ip addresss to order
+    order.customer_ip_address = request.client.host
     # add login to assign customer_id to passed customer_id to BaseOrderCreated, if user if admin,
     # and admin specifies the user, that need to be assigned to the order
     # count order amounts
