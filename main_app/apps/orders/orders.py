@@ -12,7 +12,7 @@ from apps.payments.payments import get_payment_method_by_id
 from apps.delivery.delivery import get_delivery_method_by_id
 from apps.site.delivery_pickup import get_pickup_address_by_id
 from apps.users.user import get_user_delivery_address_by_id
-from apps.cart.cart import get_cart_by_id
+from apps.cart.cart import get_cart_by_id, get_cart_by_session_id
 from apps.cart.models import BaseCart
 
 from database.main_db import db_provider
@@ -35,6 +35,10 @@ def new_order_object(new_order: BaseOrderCreate):
     if new_order.cart_id:
         cart = get_cart_by_id(new_order.cart_id)
         order.cart = cart
+    elif new_order.customer_session_id:
+        cart = get_cart_by_session_id(new_order.customer_session_id)
+        if cart:
+            order.cart = cart
     elif new_order.line_items:
         cart = BaseCart()
         cart.line_items = new_order.line_items

@@ -64,6 +64,7 @@ class LineItem(BaseModel):
 
 class BaseCart(BaseModel):
     """ Base Cart Model """
+
     id: UUID4 = Field(default_factory=uuid.uuid4, alias="_id")
     user_id: Optional[UUID4] = None
     session_id: Optional[UUID4] = None
@@ -86,6 +87,8 @@ class BaseCart(BaseModel):
     coupons: List[BaseCoupon] = []
     # gift products
     coupon_gifts: List[BaseProduct] = []
+    # bonuses to apply to the user
+    bonuses_to_apply: Optional[int] = None
 
     def delete_coupons(self):
         for line_item in self.line_items:
@@ -171,6 +174,12 @@ class BaseCart(BaseModel):
             self.coupon_gifts.clear()
             self.coupon_gifts += gift_products
 
+    def count_bonuses_to_apply(self):
+        if not self.total_amount:
+            return
+        bonuses_percent = 3
+        self.bonuses_to_apply = int((self.total_amount * bonuses_percent) / 100)
+
     def count_amount(self):
         base = 0
         discount = 0
@@ -193,6 +202,8 @@ class BaseCart(BaseModel):
         self.discount_amount = discount
         #self.promo_discount_amount = promo_discount
         self.total_amount = total
+        # count bonuses to apply
+        self.count_bonuses_to_apply()
 
 
     def delete_db(self):
