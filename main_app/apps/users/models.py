@@ -60,7 +60,7 @@ class BaseUser(BaseModel):
     is_verified: Optional[bool] = False
     name: Optional[str] = ""
     bonuses: Optional[int] = 0
-    bonuses_raknk: Optional[int] = 1
+    bonuses_rank: Optional[int] = 1
 
     #@validator("id", pre=True, always = True)
 #   def default_id(cls, v):
