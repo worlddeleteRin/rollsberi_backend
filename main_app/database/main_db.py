@@ -31,6 +31,7 @@ class DbProvider(BaseModel):
     app_clients_db: Collection
     menu_links_db: Collection
     main_sliders_db: Collection
+    bonuses_levels_db: Collection
 
     class Config:
         arbitrary_types_allowed = True
@@ -61,6 +62,7 @@ def setup_db_main() -> DbProvider:
                 app_clients_db = db_main["app_clients"],
                 menu_links_db = db_main["menu_links"],
                 main_sliders_db = db_main["main_sliders"],
+                bonuses_levels_db = db_main["bonuses_levels"],
             )
     return db_provider
 

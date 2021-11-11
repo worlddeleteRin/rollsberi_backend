@@ -175,7 +175,8 @@ class BaseCart(BaseModel):
             self.coupon_gifts += gift_products
 
     def count_bonuses_to_apply(self):
-        if not self.total_amount:
+        if not self.total_amount or self.total_amount == 0:
+            self.bonuses_to_apply = None
             return
         bonuses_percent = 3
         self.bonuses_to_apply = int((self.total_amount * bonuses_percent) / 100)

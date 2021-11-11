@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     # base static url
     base_static_url: str = ""
 
+    default_bonuses_percent: int = 3
+
 
     class Config:
         env_file = ".env"
