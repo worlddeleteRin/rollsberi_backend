@@ -14,6 +14,8 @@ from apps.products.products import get_product_by_id
 # from coupons app
 from apps.coupons.models import BaseCoupon, CouponTypeEnum
 
+from apps.bonuses.bonuses import bonuses_levels
+
 from .cart_exceptions import LineItemNotExist
 
 from database.main_db import db_provider
@@ -176,14 +178,26 @@ class BaseCart(BaseModel):
             self.coupon_gifts.clear()
             self.coupon_gifts += gift_products
 
-    def count_bonuses_to_apply(self):
+    def count_bonuses_to_apply(
+            self, 
+            current_user = None
+        ):
         if not self.total_amount or self.total_amount == 0:
             self.bonuses_to_apply = None
             return
-        bonuses_percent = settings.default_bonuses_percent
+        print('current user is', current_user)
+        if current_user and current_user.bonuses_rank and current_user.bonuses_rank in bonuses_levels.keys():
+            current_bonuses_lvl = bonuses_levels[current_user.bonuses_rank]
+            print('current user is here, bonuses lvl object is', current_bonuses_lvl)
+            bonuses_percent = current_bonuses_lvl.cart_bonuses_percent
+        else:
+            bonuses_percent = settings.default_bonuses_percent
         self.bonuses_to_apply = int((self.total_amount * bonuses_percent) / 100)
 
-    def count_amount(self):
+    def count_amount(
+            self,
+            current_user = None,
+        ):
         base = 0
         discount = 0
         promo_discount = 0
@@ -206,7 +220,8 @@ class BaseCart(BaseModel):
         #self.promo_discount_amount = promo_discount
         self.total_amount = total
         # count bonuses to apply
-        self.count_bonuses_to_apply()
+        print('current user count amount is', current_user)
+        self.count_bonuses_to_apply(current_user = current_user)
 
 
     def delete_db(self):

@@ -11,7 +11,7 @@ from config import settings
 from .models import BaseCart, LineItem, LineItemUpdate, SessionId
 from .cart_exceptions import CartAlreadyExist, CartNotExist, NotValidUUID
 
-from apps.users.user import get_current_user
+from apps.users.user import get_current_user, get_current_user_silent
 from apps.users.models import BaseUser, BaseUserDB
 # from coupons app
 from apps.coupons.coupon import get_coupon_by_id
@@ -74,13 +74,17 @@ async def create_cart(
         session_id: uuid.UUID,
         line_items: List[LineItem] = Body(..., embed=True),
         # token: str = None,
+        current_user = Depends(get_current_user_silent)
     ):
-    print('request is', request)
     """
         Create a cart for currently logged in user
         ---------------
         Exceptions:
         - line_items are empty or incorrect
+    """
+    """
+    try to get current user, if user looged in and pass credentials
+    in headers
     """
     # check, if cart is already exist
     cart = BaseCart()
@@ -95,7 +99,7 @@ async def create_cart(
     for line_item in line_items:
         cart.add_line_item(line_item)
     # count cart amount 
-    cart.count_amount()
+    cart.count_amount(current_user = current_user)
     # add new cart to db
     db_provider.carts_db.insert_one(
         cart.dict(by_alias=True)
@@ -111,43 +115,49 @@ async def create_cart(
 
 # add line_items to cart
 @router.post("/{cart_id}/items")
-def add_cart_items(
+async def add_cart_items(
         cart_id: uuid.UUID,
         line_items: List[LineItem] = Body(..., embed=True),
-        cart: BaseCart = Depends(get_current_cart_active_by_id)
+        cart: BaseCart = Depends(get_current_cart_active_by_id),
+        current_user = Depends(get_current_user_silent),
     ):
     """
         Add line_items to the cart
     """
+
     for line_item in line_items:
         cart.add_line_item(line_item)
-    cart.count_amount()
+    cart.count_amount(current_user = current_user)
     cart.update_db()
     return cart.dict()
 
 # update line item by id in cart
 @router.patch("/{cart_id}/items/{item_id}")
-def update_cart_item(
+async def update_cart_item(
         request: Request,
         cart_id: uuid.UUID,
         item_id: uuid.UUID,
         line_item: LineItemUpdate = Body(..., embed=True),
-        cart: BaseCart = Depends(get_current_cart_active_by_id)
+        cart: BaseCart = Depends(get_current_cart_active_by_id),
+        current_user = Depends(get_current_user_silent),
     ):
+    print('run update cart item, current user is', current_user)
+
     cart.update_line_item(item_id, line_item)
-    cart.count_amount()
+    cart.count_amount(current_user = current_user)
     cart.update_db()
     return cart.dict()
 
 # delete line item by id in cart 
 @router.delete("/{cart_id}/items/{item_id}")
-def delete_cart_item(
+async def delete_cart_item(
         cart_id: uuid.UUID,
         item_id: uuid.UUID,
-        cart: BaseCart = Depends(get_current_cart_active_by_id)
+        cart: BaseCart = Depends(get_current_cart_active_by_id),
+        current_user = Depends(get_current_user_silent)
     ):
     cart.remove_line_item(item_id)
-    cart.count_amount()
+    cart.count_amount(current_user = current_user)
     cart.update_db()
     return cart.dict()
 
@@ -161,7 +171,6 @@ def add_cart_coupon(
     coupon = get_coupon_by_id(coupon_code = coupon_code, db_model = True)
     if not coupon:
         return None
-    print('coupon is', coupon)
     # check, if user can apply coupon
     # check, coupon is enable and not expired
     is_active: bool = coupon.check_active() 
@@ -182,7 +191,7 @@ def add_cart_coupon(
             "msg": msg,
         }
     # count cart amount to apply coupon
-    cart.count_amount()
+    cart.count_amount(current_user = current_user)
 
     cart.update_db()
     return {
@@ -192,10 +201,12 @@ def add_cart_coupon(
     }
 
 @router.post("/{cart_id}/coupons/remove") # remove coupon from cart
-def remove_cart_coupon(
+async def remove_cart_coupon(
     cart: BaseCart = Depends(get_current_cart_active_by_id),
+    current_user = Depends(get_current_user_silent),
 ):
+
     cart.delete_coupons()
-    cart.count_amount()
+    cart.count_amount(current_user = current_user)
     cart.update_db()
     return cart.dict()

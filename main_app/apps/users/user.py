@@ -16,7 +16,7 @@ from .user_exceptions import InvalidAuthenticationCredentials, IncorrectVerifica
 from database.main_db import db_provider
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/token", auto_error = False)
 
 
 
@@ -45,8 +45,30 @@ def get_user_by_id(user_id: UUID4) -> BaseUser:
         raise
     return BaseUser(**user_dict)
 
+async def get_current_user_silent(token: str = Depends(oauth2_scheme)):
+    print('get current user silent, token is', token)
+    try:
+        payload = decode_token(token, settings.JWT_SECRET_KEY, [settings.JWT_ALGORITHM])
+        username = payload.get("sub")
+        if username is None:
+            return None
+        #    raise InvalidAuthenticationCredentials
+        token_data = TokenData(username = username)
+    except JWTError:
+        return None
+        # raise InvalidAuthenticationCredentials
+    except Exception as e:
+        return None
+    if not token_data.username:
+        return None
+        # raise InvalidAuthenticationCredentials
+    user = get_user(username = token_data.username)
+    if user is None:
+        return None
+        # raise InvalidAuthenticationCredentials
+    return user
+
 async def get_current_user(token: str = Depends(oauth2_scheme)):
-#   print('run get current user, requets is', request)
     try:
         payload = decode_token(token, settings.JWT_SECRET_KEY, [settings.JWT_ALGORITHM])
         username = payload.get("sub")
