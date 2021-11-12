@@ -18,6 +18,8 @@ from .cart_exceptions import LineItemNotExist
 
 from database.main_db import db_provider
 
+from config import settings
+
 
 class SessionId(BaseModel):
     id: UUID4
@@ -178,7 +180,7 @@ class BaseCart(BaseModel):
         if not self.total_amount or self.total_amount == 0:
             self.bonuses_to_apply = None
             return
-        bonuses_percent = 3
+        bonuses_percent = settings.default_bonuses_percent
         self.bonuses_to_apply = int((self.total_amount * bonuses_percent) / 100)
 
     def count_amount(self):
