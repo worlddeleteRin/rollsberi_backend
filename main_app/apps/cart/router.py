@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, Response, Body
+from fastapi import APIRouter, Depends, Request, Response, Body, HTTPException
 from typing import Optional, List
 
 from datetime import datetime, timedelta
@@ -216,7 +216,21 @@ async def remove_cart_coupon(
 async def add_pay_bonuses(
     cart: BaseCart = Depends(get_current_cart_active_by_id),
     current_user = Depends(get_current_user),
-    pay_with_bonuses: int = Body(...),
+    pay_with_bonuses: int = Body(..., embed = True),
 ):
+    if cart.bonuses_used:
+        cart.bonuses_used = False
+        cart.pay_with_bonuses = None
+        cart.count_amount()
+
+    cart.pay_with_bonuses = pay_with_bonuses
+    cart.bonuses_used = True
+    can_pay, msg = cart.check_can_pay_with_bonuses()
+    if not can_pay:
+        raise HTTPException(status_code = 400, detail=msg)
+
+    cart.count_amount(current_user = current_user)
+    cart.update_db()
+
     print(pay_with_bonuses)
     return cart.dict()

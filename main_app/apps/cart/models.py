@@ -207,6 +207,9 @@ class BaseCart(BaseModel):
         promo_discount = 0
         total = 0
         # apply coupons, if they are exists
+
+        if self.bonuses_used:
+            self.check_can_pay_with_bonuses()
         if len(self.coupons) > 0:
             self.apply_coupons()
         # count base and discount amount
@@ -253,6 +256,17 @@ class BaseCart(BaseModel):
             if line_item.product_id == new_line_item.product_id:
                 return True, line_item
         return False, None
+
+    def check_can_pay_with_bonuses(self):
+        if not self.pay_with_bonuses or self.pay_with_bonuses == 0 or not self.total_amount:
+            self.pay_with_bonuses = None
+            self.bonuses_used = False
+            return False, "Неверное значение бонусов"
+        if self.pay_with_bonuses > int(self.total_amount * 0.5):
+            self.pay_with_bonuses = None
+            self.bonuses_used = False
+            return False, "Бонусами можно оплатить до 50% стоимости заказа"
+        return True, ""
 
     def add_line_item(self, line_item):
         line_item_exists, exist_line_item = self.check_product_in_cart_exists(line_item)
