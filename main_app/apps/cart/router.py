@@ -210,3 +210,13 @@ async def remove_cart_coupon(
     cart.count_amount(current_user = current_user)
     cart.update_db()
     return cart.dict()
+
+# pay with bonuses logic
+@router.post("/{cart_id}/pay-bonuses")
+async def add_pay_bonuses(
+    cart: BaseCart = Depends(get_current_cart_active_by_id),
+    current_user = Depends(get_current_user),
+    pay_with_bonuses: int = Body(...),
+):
+    print(pay_with_bonuses)
+    return cart.dict()
