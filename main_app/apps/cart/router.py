@@ -234,3 +234,15 @@ async def add_pay_bonuses(
 
     print(pay_with_bonuses)
     return cart.dict()
+
+@router.delete("/{cart_id}/pay-bonuses")
+async def add_pay_bonuses(
+    cart: BaseCart = Depends(get_current_cart_active_by_id),
+    current_user = Depends(get_current_user),
+):
+    cart.bonuses_used = False
+    cart.pay_with_bonuses = None
+    cart.count_amount()
+    cart.update_db()
+
+    return cart.dict()
