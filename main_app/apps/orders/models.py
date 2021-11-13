@@ -136,7 +136,7 @@ class BaseOrder(BaseModel):
     customer_ip_address: Optional[str] = None
 
     status: OrderStatus = order_statuses["awaiting_confirmation"]
-#   status: OrderStatusEnum = OrderStatusEnum.awaiting_confirmation
+    #   status: OrderStatusEnum = OrderStatusEnum.awaiting_confirmation
 
     date_created: Optional[datetime] = Field(default_factory=datetime.utcnow)
     date_modified: Optional[datetime] = Field(default_factory=datetime.utcnow)

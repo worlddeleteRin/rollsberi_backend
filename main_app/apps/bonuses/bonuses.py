@@ -8,32 +8,32 @@ from .models import BonusesLevel
 b_lvl1 = BonusesLevel(
     id = 1,
     title = "first level",
-    cart_bonuses_percent = 3,
+    cart_bonuses_percent = 4,
     need_to_spent = 0
 )
 b_lvl2 = BonusesLevel(
     id = 2,
     title = "second level",
-    cart_bonuses_percent = 4,
+    cart_bonuses_percent = 5,
     need_to_spent = 3000
 )
 b_lvl3 = BonusesLevel(
     id = 3,
     title = "third level",
-    cart_bonuses_percent = 5,
+    cart_bonuses_percent = 6,
     need_to_spent = 8000
 )
 b_lvl4 = BonusesLevel(
     id = 4,
     title = "fourth level",
-    cart_bonuses_percent = 6,
+    cart_bonuses_percent = 7,
     need_to_spent = 15000
 )
 bonuses_levels = {
-    "1": b_lvl1,
-    "2": b_lvl2,
-    "3": b_lvl3,
-    "4": b_lvl4,
+    1: b_lvl1,
+    2: b_lvl2,
+    3: b_lvl3,
+    4: b_lvl4,
 }
 
 """

@@ -79,8 +79,8 @@ async def check_exist_verified_user(
 
 @router.get("/me")
 async def read_users_me(
-    current_user: BaseUserDB = Depends(get_current_active_user)):
-#   print('current user is', current_user.dict())
+    current_user: BaseUserDB = Depends(get_current_active_user)
+    ):
     return current_user.dict(exclude={"hashed_password"})
 
 @router.post("/register")

@@ -39,3 +39,8 @@ class MainSliderItem(BaseModel):
     link_path: Optional[str] 
     display_order: Optional[int] = 0
     imgsrc: str
+
+class RequestCall(BaseModel):
+    name: str = ""
+    phone: str = ""
+    phone_mask: str = ""

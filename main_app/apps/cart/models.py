@@ -76,6 +76,10 @@ class BaseCart(BaseModel):
     date_created: Optional[datetime] = Field(default_factory=datetime.utcnow)
     date_modified: Optional[datetime] = Field(default_factory=datetime.utcnow)
     line_items: List[LineItem] = []
+    # if bonuses was used in cart
+    bonuses_used: bool = False
+    # pay with bonuses amount
+    pay_with_bonuses: Optional[int] = None
     # amount values
     promo_amount: Optional[int] = None
     # cost of carts content before apply discounts
@@ -186,7 +190,7 @@ class BaseCart(BaseModel):
             self.bonuses_to_apply = None
             return
         print('current user is', current_user)
-        if current_user and current_user.bonuses_rank and current_user.bonuses_rank in bonuses_levels.keys():
+        if current_user and current_user.bonuses_rank and current_user.bonuses_rank in bonuses_levels:
             current_bonuses_lvl = bonuses_levels[current_user.bonuses_rank]
             print('current user is here, bonuses lvl object is', current_bonuses_lvl)
             bonuses_percent = current_bonuses_lvl.cart_bonuses_percent
@@ -212,6 +216,8 @@ class BaseCart(BaseModel):
             promo_discount += line_item.get_promo_discount()
         # count total amount 
         total = base - discount - promo_discount
+        if self.bonuses_used and self.pay_with_bonuses:
+            total -= self.pay_with_bonuses
         if self.promo_amount and self.promo_amount > 0:
             total -= self.promo_amount
         # assign to object vars
@@ -220,7 +226,6 @@ class BaseCart(BaseModel):
         #self.promo_discount_amount = promo_discount
         self.total_amount = total
         # count bonuses to apply
-        print('current user count amount is', current_user)
         self.count_bonuses_to_apply(current_user = current_user)
 
 
