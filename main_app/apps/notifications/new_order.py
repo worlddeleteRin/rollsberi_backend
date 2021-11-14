@@ -32,11 +32,13 @@ async def send_order_telegram(msg:str):
 async def send_order_admin_notification(order: BaseOrder):
     if not order:
         return
-    print('send admin notification run')
     msg = "🔥 *Новый заказ* ✨ \n"
     msg += f"{'-'*5} Информация по заказу {'-'*5} \n"
     msg += f"Дата создания: {order.date_created} \n"
     msg += f"Клиент: *{order.customer_username}* \n"
+
+    if not order.cart:
+        return None
     if order.payment_method and order.delivery_method:
         msg += f"Оплата: *{order.payment_method.name}* \n"
         msg += f"Доставка: *{order.delivery_method.name}* \n"
@@ -51,6 +53,8 @@ async def send_order_admin_notification(order: BaseOrder):
     msg += f"Сумма скидки: {order.cart.discount_amount} \n"
     if order.cart.promo_discount_amount and order.cart.promo_discount_amount > 0:
         msg += f"Скидка по промокоду: {order.cart.promo_discount_amount} \n"
+    if order.cart.bonuses_used and order.cart.pay_with_bonuses:
+        msg += f"Оплачено бонусами: {order.cart.pay_with_bonuses} \n"
     msg += f"Сумма заказа: *{order.cart.total_amount}* \n"
     msg += f"{'-'*5} Состав заказа {'-'*5} \n"
     for index, item in enumerate(order.cart.line_items):
@@ -58,7 +62,7 @@ async def send_order_admin_notification(order: BaseOrder):
 
 
     # replace for telegram
-    msg = msg.replace('-', '\-').replace('.', '\.').replace('=', '\=').replace('(','\(').replace(')','\)')
+    msg = msg.replace('-', '\-').replace('.', '\.').replace('=', '\=').replace('(','\(').replace(')','\)').replace('+', '\+')
 
     await send_order_telegram(msg=msg)
 #   await send_order_email(msg=msg)

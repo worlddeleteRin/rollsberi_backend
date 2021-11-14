@@ -22,6 +22,7 @@ from apps.users.user import get_user_by_id
 from apps.payments.models import PaymentMethod
 from apps.delivery.models import DeliveryMethod
 from apps.site.models import PickupAddress
+from apps.site.utils import get_time_now
 
 from database.main_db import db_provider
 
@@ -138,8 +139,8 @@ class BaseOrder(BaseModel):
     status: OrderStatus = order_statuses["awaiting_confirmation"]
     #   status: OrderStatusEnum = OrderStatusEnum.awaiting_confirmation
 
-    date_created: Optional[datetime] = Field(default_factory=datetime.utcnow)
-    date_modified: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    date_created: Optional[datetime] = Field(default_factory=get_time_now)
+    date_modified: Optional[datetime] = Field(default_factory=get_time_now)
     # payment method id 
     payment_method: Optional[PaymentMethod] = None
     # delivery_method id

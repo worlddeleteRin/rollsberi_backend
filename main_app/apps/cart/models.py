@@ -11,6 +11,7 @@ from datetime import datetime
 from apps.products.models import BaseProduct
 from apps.products.products import get_product_by_id
 
+from apps.site.utils import get_time_now
 # from coupons app
 from apps.coupons.models import BaseCoupon, CouponTypeEnum
 
@@ -21,6 +22,7 @@ from .cart_exceptions import LineItemNotExist
 from database.main_db import db_provider
 
 from config import settings
+
 
 
 class SessionId(BaseModel):
@@ -73,8 +75,8 @@ class BaseCart(BaseModel):
     user_id: Optional[UUID4] = None
     session_id: Optional[UUID4] = None
     customer_id: Optional[UUID4] = None
-    date_created: Optional[datetime] = Field(default_factory=datetime.utcnow)
-    date_modified: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    date_created: Optional[datetime] = Field(default_factory=get_time_now)
+    date_modified: Optional[datetime] = Field(default_factory=get_time_now)
     line_items: List[LineItem] = []
     # if bonuses was used in cart
     bonuses_used: bool = False
@@ -309,5 +311,5 @@ class BaseCart(BaseModel):
                 self.line_items.remove(line_item)
 
     def set_modified(self):
-        self.date_modified = datetime.utcnow()
+        self.date_modified = get_time_now()
 
