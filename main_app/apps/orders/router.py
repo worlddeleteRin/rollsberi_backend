@@ -26,6 +26,8 @@ from apps.notifications.new_order import send_order_admin_notification
 
 from database.main_db import db_provider
 
+import math
+
 
 
 # order exceptions
@@ -51,7 +53,9 @@ def get_orders(
         per_page = per_page,
         page = page,
     )
-    pages_count = int(db_provider.orders_db.count_documents({}) / per_page)
+    pages_count = int(
+        math.ceil(db_provider.orders_db.count_documents({}) / per_page)
+    )
     return {
         'info': {
             'count': orders.__len__(),
