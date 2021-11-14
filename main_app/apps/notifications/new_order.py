@@ -21,15 +21,16 @@ class TelegramBot(BaseModel):
         resp = httpx.post(req_url, data = data)
         print('resp is', resp.json())
 
-async def send_order_email(msg:str):
+def send_order_email(msg:str):
     pass
 
-async def send_order_telegram(msg:str):
+def send_order_telegram(msg:str):
     group_id = settings.telegram_notif_group_id
     bot = TelegramBot(username=settings.telegram_bot_username, access_token=settings.telegram_bot_token)
     bot.send_msg(group_id, msg)
 
-async def send_order_admin_notification(order: BaseOrder):
+def send_order_admin_notification(order: BaseOrder):
+    print('call send order admin notif order is', order)
     if not order:
         return
     msg = "🔥 *Новый заказ* ✨ \n"
@@ -64,5 +65,5 @@ async def send_order_admin_notification(order: BaseOrder):
     # replace for telegram
     msg = msg.replace('-', '\-').replace('.', '\.').replace('=', '\=').replace('(','\(').replace(')','\)').replace('+', '\+')
 
-    await send_order_telegram(msg=msg)
+    send_order_telegram(msg=msg)
 #   await send_order_email(msg=msg)

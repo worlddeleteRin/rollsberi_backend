@@ -5,6 +5,10 @@ from typing import Optional, List
 from pydantic import UUID4, BaseModel, Field, validator
 from datetime import datetime, date
 
+from pymongo import ReturnDocument
+
+from database.main_db import db_provider
+
 
 class Token(BaseModel):
     access_token: str
@@ -59,14 +63,19 @@ class BaseUser(BaseModel):
     is_superuser: Optional[bool] = False
     is_verified: Optional[bool] = False
     name: Optional[str] = ""
-    bonuses: Optional[int] = 0
+    bonuses: int = 0
     bonuses_rank: Optional[int] = 1
 
-    #@validator("id", pre=True, always = True)
-#   def default_id(cls, v):
-#       return v or uuid.uuid4()
     class Config:
         allow_population_by_field_name = True
+
+    def update_db(self):
+        updated_user = db_provider.users_db.find_one_and_update(
+            {"_id": self.id},
+            {"$set": self.dict(by_alias=True)},
+            return_document=ReturnDocument.AFTER
+        )
+        return updated_user 
 
 class BaseUserCreate(BaseModel):
     username: str

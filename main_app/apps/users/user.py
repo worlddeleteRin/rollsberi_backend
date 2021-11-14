@@ -37,11 +37,16 @@ def get_user(username: str) -> BaseUserDB:
     return BaseUserDB(**user_dict)
 
 
-def get_user_by_id(user_id: UUID4) -> BaseUser:
+def get_user_by_id(
+    user_id: UUID4, 
+    silent: bool = False,
+    ):
     user_dict = db_provider.users_db.find_one(
         {"_id": user_id}
     )
     if not user_dict:
+        if silent:
+            return None
         raise
     return BaseUser(**user_dict)
 

@@ -88,11 +88,14 @@ async def create_cart(
     """
     # check, if cart is already exist
     cart = BaseCart()
-    exist_cart = db_provider.carts_db.find_one(
+    exist_cart_dict = db_provider.carts_db.find_one(
         {"session_id": session_id}
     )
     # if cart exist, dont create it and raise excaption
-    if exist_cart:
+    if exist_cart_dict:
+        # exist_cart = BaseCart(**exist_cart_dict)
+        # exist_cart.delete_db()
+        # cart = BaseCart()
         raise CartAlreadyExist
     # cart not exist, add session_id
     cart.session_id = session_id
@@ -220,7 +223,7 @@ async def add_pay_bonuses(
 ):
     if cart.bonuses_used:
         cart.bonuses_used = False
-        cart.pay_with_bonuses = None
+        cart.pay_with_bonuses = 0
         cart.count_amount()
 
     cart.pay_with_bonuses = pay_with_bonuses
@@ -241,7 +244,7 @@ async def add_pay_bonuses(
     current_user = Depends(get_current_user),
 ):
     cart.bonuses_used = False
-    cart.pay_with_bonuses = None
+    cart.pay_with_bonuses = 0
     cart.count_amount()
     cart.update_db()
 

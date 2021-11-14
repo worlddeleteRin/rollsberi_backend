@@ -81,7 +81,7 @@ class BaseCart(BaseModel):
     # if bonuses was used in cart
     bonuses_used: bool = False
     # pay with bonuses amount
-    pay_with_bonuses: Optional[int] = None
+    pay_with_bonuses: int = 0
     # amount values
     promo_amount: Optional[int] = None
     # cost of carts content before apply discounts
@@ -261,11 +261,11 @@ class BaseCart(BaseModel):
 
     def check_can_pay_with_bonuses(self):
         if not self.pay_with_bonuses or self.pay_with_bonuses == 0 or not self.total_amount:
-            self.pay_with_bonuses = None
+            self.pay_with_bonuses = 0
             self.bonuses_used = False
             return False, "Неверное значение бонусов"
         if self.pay_with_bonuses > int(self.total_amount * 0.5):
-            self.pay_with_bonuses = None
+            self.pay_with_bonuses = 0
             self.bonuses_used = False
             return False, "Бонусами можно оплатить до 50% стоимости заказа"
         return True, ""

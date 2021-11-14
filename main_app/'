@@ -147,7 +147,7 @@ def update_order(
     return updated_order.dict()
 
 @router.post("/")
-async def create_order(
+def create_order(
     request: Request,
     new_order: BaseOrderCreate,
     # background task
@@ -183,8 +183,8 @@ async def create_order(
 #       if cart:
 #           cart.delete_db()
     # add background task to send order notification
-    order_created_event(background_tasks, order)
-    # background_tasks.add_task(send_order_admin_notification, order)
+    # order_created_event(background_tasks, order)
+    background_task.add_task(send_order_admin_notification, order)
 
-    order.dict()
+    return order.dict()
 
