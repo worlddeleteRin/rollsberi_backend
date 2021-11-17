@@ -29,7 +29,7 @@ from database.main_db import db_provider
 
 # include all necessary routes
 app = FastAPI(
-    dependencies=[Depends(get_api_app_client)]
+#    dependencies=[Depends(get_api_app_client)]
 )
 # mount static files folder
 app.mount("/static", StaticFiles(directory="static"), name = "static")
@@ -57,26 +57,7 @@ app.include_router(site_router.router)
 async def startup_db_client():
     print('settings are', settings.dict())
     print('db provider is', db_provider)
-    # setup_mongodb(app)
-    # print('now app is', app)
-    # print('app mongo db is', app.mongodb)
-    # previous method to set up database collections
-    """
-    app.users_db = app.mongodb["users"]
-    print('users_db is', app.users_db)
-    app.users_addresses_db = app.mongodb["users_addresses"]
-    app.products_db = app.mongodb["products"]
-    app.categories_db = app.mongodb["categories"]
-    app.carts_db = app.mongodb["carts"]
-    app.coupons_db = app.mongodb["coupons"]
-    app.orders_db = app.mongodb["orders"]
-    app.payment_methods_db = app.mongodb["payment_methods"]
-    app.delivery_methods_db = app.mongodb["delivery_methods"]
-    app.pickup_addresses_db = app.mongodb["pickup_addresses"]
-    app.order_statuses_db = app.mongodb["order_statuses"]
-    app.stocks_db = app.mongodb["stocks"]
-    app.app_clients_db = app.mongodb["app_clients"]
-    """
+
 
 @app.on_event('shutdown')
 async def shutdown_db_client():
@@ -90,7 +71,6 @@ def get_status():
     """ Get status of server """
     return {
         "status": "running",
-        "settings": settings.dict(),
         }
 
 @app.get("/session")
