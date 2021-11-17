@@ -12,11 +12,10 @@ def get_api_app_client(
     )
     print('api key query is', api_key_header)
     print('client is', app_client_dict)
-    """
+
     if not app_client_dict:
         raise HTTPException(
             status_code = 400,
             detail = "Incorrect auth credentials",
         )
-    """
 

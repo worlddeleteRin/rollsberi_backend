@@ -29,7 +29,7 @@ from database.main_db import db_provider
 
 # include all necessary routes
 app = FastAPI(
-#    dependencies=[Depends(get_api_app_client)]
+    dependencies=[Depends(get_api_app_client)]
 )
 # mount static files folder
 app.mount("/static", StaticFiles(directory="static"), name = "static")
