@@ -1,5 +1,4 @@
 import uvicorn
-# from starlette.middleware.sessions import SessionMiddleware
 from fastapi import FastAPI, Depends, Request
 from starlette.middleware.cors import CORSMiddleware
 # import staticfiles
