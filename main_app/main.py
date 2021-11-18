@@ -1,6 +1,6 @@
 import uvicorn
 # from starlette.middleware.sessions import SessionMiddleware
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 from starlette.middleware.cors import CORSMiddleware
 # import staticfiles
 from fastapi.staticfiles import StaticFiles
@@ -67,8 +67,10 @@ async def shutdown_db_client():
 
 
 @app.get("/status")
-def get_status():
+def get_status(request: Request):
     """ Get status of server """
+    print('request is', request)
+    print(request.__dict__)
     return {
         "status": "running",
         }

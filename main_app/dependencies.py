@@ -7,7 +7,7 @@ from database.main_db import db_provider
 import sys
 
 def get_api_app_client(
-    api_key_header:str = Security(APIKeyHeader(name="app_token", auto_error=False))
+    api_key_header:str = Security(APIKeyHeader(name="App-Token", auto_error=False))
     # api_key_header: str = "another_access_token_here"
 ):
     print('api key query is', api_key_header)
