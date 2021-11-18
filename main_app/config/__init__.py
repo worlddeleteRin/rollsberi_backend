@@ -31,6 +31,7 @@ class Settings(BaseSettings):
 @lru_cache()
 def get_settings():
     print('execute get_settings function')
+    print('settings are', Settings())
     return Settings()
 
 settings = get_settings()

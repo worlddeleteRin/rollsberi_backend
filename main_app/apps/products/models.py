@@ -150,6 +150,14 @@ class BaseProduct(BaseModel):
         )
         print('insert result is', result)
 
+    def check_exists_slug(self):
+        product_exists_dict = db_provider.products_db.find_one(
+            {"slug": self.slug}
+        )
+        if product_exists_dict:
+            return True
+        return False
+
     def delete_db(self):
         db_provider.products_db.delete_one(
             {"_id": self.id}
