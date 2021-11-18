@@ -8,11 +8,6 @@ from fastapi.staticfiles import StaticFiles
 # app config (env variables)
 from config import settings
 
-# import motor.motor_asyncio
-# from bson.objectid import ObjectId
-# from bson import json_util
-# import json
-
 # routes importing
 from apps.products import router as products_router
 from apps.users import router as users_router
