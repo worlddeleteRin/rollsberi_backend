@@ -6,7 +6,7 @@ WORKDIR $WORKDIR
 
 EXPOSE 8000
 
-RUN pip install --upgrade pip
+# RUN pip install --upgrade pip
 COPY ./requirements.txt $WORKDIR/requirements.txt
 RUN pip install -r requirements.txt
 COPY ./main_app $WORKDIR
