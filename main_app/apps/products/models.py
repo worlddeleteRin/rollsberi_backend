@@ -155,8 +155,8 @@ class BaseProduct(BaseModel):
             {"slug": self.slug}
         )
         if product_exists_dict:
-            return True
-        return False
+            return True, BaseProduct(**product_exists_dict)
+        return False, None
 
     def delete_db(self):
         db_provider.products_db.delete_one(
