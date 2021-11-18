@@ -111,6 +111,7 @@ class BaseProductCreate(BaseModel):
 class BaseProduct(BaseModel):
 #   id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
     id: UUID4 = Field(default_factory = uuid.uuid4, alias="_id")
+    slug: str = ""
     name: str
     description: Optional[str]
     imgsrc: Optional[list] = []
