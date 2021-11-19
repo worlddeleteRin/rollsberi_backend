@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, Body
+from fastapi import APIRouter, Depends, Request, Body, BackgroundTasks
 from typing import Optional, List
 
 from datetime import datetime, timedelta
@@ -19,6 +19,8 @@ from apps.delivery.delivery import get_delivery_methods
 from apps.users.user import get_current_admin_user
 
 from apps.orders.models import order_statuses
+
+from apps.notifications.call_request import send_call_request_admin_notification
 
 from database.main_db import db_provider
 # order exceptions
@@ -110,10 +112,11 @@ def create_stock(
     return stock.dict()
 
 @router.post("/request-call")
-def request_call(
+async def request_call(
     call_object: RequestCall,
+    background_tasks: BackgroundTasks,
 ):
-    print('call object is', call_object)
+    background_tasks.add_task(send_call_request_admin_notification, call_object)
     return {
         "success": True,
     }

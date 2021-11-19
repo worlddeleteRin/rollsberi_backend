@@ -1,25 +1,10 @@
-import time
+# import time
 from config import settings
-from pydantic import BaseModel
-import httpx
 ###
 from apps.orders.models import BaseOrder
 
-class TelegramBot(BaseModel):
-    api_url: str = "https://api.telegram.org/bot"
-    username: str
-    access_token: str
+from .models import TelegramBot
 
-    def send_msg(self, chat_id: str, msg: str):
-        req_url = self.api_url + self.access_token + "/sendMessage"
-        print('request url is', req_url)
-        data = {
-            "chat_id": chat_id,
-            "text": msg,
-            "parse_mode": "MarkdownV2",
-        }
-        resp = httpx.post(req_url, data = data)
-        print('resp is', resp.json())
 
 def send_order_email(msg:str):
     pass
