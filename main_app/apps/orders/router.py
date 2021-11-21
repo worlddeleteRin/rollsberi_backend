@@ -15,9 +15,10 @@ from config import settings
 from apps.users.user import get_current_active_user, get_current_admin_user
 from apps.users.models import BaseUser
 
-from .models import BaseOrder, BaseOrderCreate, BaseOrderUpdate
+from .models import BaseOrder, BaseOrderCreate, BaseOrderUpdate, OrderStatusEnum
 from .orders import get_order_by_id, new_order_object, get_orders_db
-from .events import order_created_event
+
+from .events import order_created_event, order_completed_event
 
 from apps.cart.cart import delete_session_cart
 
@@ -31,6 +32,7 @@ import math
 
 
 # order exceptions
+from .order_exceptions import OrderNotEditable
 
 router = APIRouter(
     prefix = "/orders",
@@ -142,12 +144,25 @@ def delete_order(
 def update_order(
     order_id: uuid.UUID,
     update_order: BaseOrderUpdate,
+    background_tasks: BackgroundTasks,
+    admin_user = Depends(get_current_admin_user),
 ):
     order = get_order_by_id(order_id)
+    can_edit = order.check_can_edit()
+    print('can edit order', can_edit)
+    if not can_edit:
+        raise OrderNotEditable
     update_order.set_status()
     to_update = update_order.dict(exclude_unset=True)
     order = order.copy(update=to_update)
     updated_order = order.update_db()
+    # run order completed event, if status is completed
+    print('updated order is', updated_order)
+    if updated_order.status.id == OrderStatusEnum.completed:
+        order_completed_event(
+            background_tasks = background_tasks,
+            order = updated_order 
+        )
     return updated_order.dict()
 
 @router.post("/")

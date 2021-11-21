@@ -156,6 +156,12 @@ class BaseOrder(BaseModel):
     pickup_address: Optional[PickupAddress] = None
     # custom customer message, provided for order
     custom_message: Optional[str] = None
+    
+    def check_can_edit(self):
+        can_not_edit_statusses = ['completed', 'cancelled']
+        if self.status.id in can_not_edit_statusses:
+            return False
+        return True
 
     def check_set_user(self):
         if not self.customer_id:

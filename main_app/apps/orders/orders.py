@@ -18,6 +18,7 @@ from apps.cart.models import BaseCart
 from database.main_db import db_provider
 
 
+
 def get_order_by_id(order_id: uuid.UUID, link_products: bool = True) -> BaseOrder:
     order = db_provider.orders_db.find_one(
         {"_id": order_id}
@@ -57,6 +58,20 @@ def get_orders_by_user_id(user_id: UUID4):
         return []
     user_orders = [BaseOrder(**order).dict() for order in user_orders_dict]
     return user_orders
+
+def get_user_total_spent_by_user_id(user_id: UUID4):
+    aggregate_query = [{
+        "$group": {
+            "_id": None,
+            "total_spent": {
+                "$sum": "$cart.total_amount"
+            }
+        }
+    }]
+    query_dict = list(db_provider.orders_db.aggregate(
+        aggregate_query
+    ))[0]
+    return query_dict["total_spent"]
 
 def get_orders_db(
     per_page: int = 10,
