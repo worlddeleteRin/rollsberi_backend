@@ -50,6 +50,7 @@ app.include_router(site_router.router)
 @app.on_event('startup')
 async def startup_db_client():
     print("startup db client")
+    print('setting are', settings)
     pass
 
 
