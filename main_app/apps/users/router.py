@@ -93,7 +93,7 @@ async def register_user(
     """
     print('run register method')
     # need to send verification sms code, and, save it to user database field
-    is_success, code =  smsc_send_call_code(
+    is_success, code = smsc_send_call_code(
         smsc_login = settings.smsc_login,
         smsc_password = settings.smsc_password,
         phone = user_to_register.username,

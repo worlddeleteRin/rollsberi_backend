@@ -13,7 +13,7 @@ class NotSendVerificationCode(HTTPException):
 class IncorrectVerificationCode(HTTPException):
 	def __init__(self):
 		self.status_code = 400
-		self.detail = "incorrect verification code"
+		self.detail = "Неверный код верификации"
 
 class InactiveUser(HTTPException):
 	def __init__(self):
