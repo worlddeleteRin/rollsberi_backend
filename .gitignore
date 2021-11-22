@@ -4,6 +4,8 @@ rollsberi_backend_env
 secure.py
 **/__pycache__
 .env
+.env.prod
+.env.dev
 **/.env
 test
 .test

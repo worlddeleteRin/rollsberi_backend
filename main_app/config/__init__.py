@@ -1,6 +1,9 @@
 from pydantic import BaseSettings
 from functools import lru_cache
 
+import os
+
+
 class Settings(BaseSettings):
     app_name: str = "Some app name"
     JWT_SECRET_KEY: str = ''
@@ -31,7 +34,7 @@ class Settings(BaseSettings):
 @lru_cache()
 def get_settings():
     print('execute get_settings function')
-    print('settings are', Settings())
+    #print('settings are', Settings())
     return Settings()
 
 settings = get_settings()
