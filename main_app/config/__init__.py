@@ -4,7 +4,6 @@ from functools import lru_cache
 import os
 import sys
 
-
 class Settings(BaseSettings):
     app_name: str = "Some app name"
     JWT_SECRET_KEY: str = ''
@@ -40,10 +39,10 @@ def get_settings():
         env_file = '.env.prod'
     elif env_mode == 'dev':
         env_file = '.env.dev'
-    else:
-        env_file = '.env'
+    env_file = '.env.dev'
     #print('settings are', Settings())
-    env_location = f'secure/{env_file}'
+    env_location = f'{env_file}'
+    print('env location is', env_location)
     return Settings(_env_file = env_location)
 
 settings = get_settings()
