@@ -5,7 +5,7 @@ from starlette.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 # app config (env variables)
-from config import get_settings
+from config import settings
 
 # routes importing
 from apps.products import router as products_router
@@ -50,8 +50,6 @@ app.include_router(site_router.router)
 @app.on_event('startup')
 async def startup_db_client():
     print("startup db client")
-    settings = get_settings(env_file = ".env.prod")
-    print('settings are', settings)
     pass
 
 
@@ -84,7 +82,6 @@ if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host='0.0.0.0',
-        reload = True,
-        # reload=settings.DEBUG_MODE,
+        reload=settings.DEBUG_MODE,
         port=8000,
     )

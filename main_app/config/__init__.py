@@ -2,6 +2,7 @@ from pydantic import BaseSettings
 from functools import lru_cache
 
 import os
+import sys
 
 
 class Settings(BaseSettings):
@@ -33,7 +34,13 @@ class Settings(BaseSettings):
 
 @lru_cache()
 def get_settings():
-    print('execute get_settings function')
+    env_mode = os.getenv("env_mode")
+    if env_mode == 'prod':
+        env_file = '.env.prod'
+    elif env_mode == 'dev':
+        env_file = '.env.dev'
+    else:
+        env_file = '.env'
     #print('settings are', Settings())
     return Settings()
 

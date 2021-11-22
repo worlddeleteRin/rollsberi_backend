@@ -1,6 +1,9 @@
 ansible/
 rollsberi_backend_env
 *.swp
+/secure
+**/secure
+**secure
 secure.py
 **/__pycache__
 .env
