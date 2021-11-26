@@ -48,6 +48,14 @@ class BaseCategoryCreate(BaseModel):
     menu_order: int = 0
     parent_id: Optional[UUID4]
 
+    def check_exists_slug(self):
+        category_exists_dict = db_provider.categories_db.find_one(
+            {"slug": self.slug}
+        )
+        if category_exists_dict:
+            return True, BaseCategory(**category_exists_dict)
+        return False, None
+
 class BaseCategoryUpdate(BaseModel):
     name: str
     slug: str
@@ -55,6 +63,14 @@ class BaseCategoryUpdate(BaseModel):
     imgsrc: Optional[list] = []
     menu_order: int = 0
     parent_id: Optional[UUID4]
+
+    def check_exists_slug(self):
+        category_dict = db_provider.categories_db.find_one(
+            {"slug": self.slug}
+        )
+        if category_dict:
+            return True, BaseCategory(**category_dict)
+        return False, None
 
 class BaseCategory(BaseModel):
     id: UUID4 = Field(default_factory = uuid.uuid4, alias="_id")
@@ -84,10 +100,11 @@ class BaseCategory(BaseModel):
             {"$set": self.dict(by_alias=True)},
             return_document=ReturnDocument.AFTER
         )
+        print('udated category is', updated_category)
         if updated_category:
             category = BaseCategory(**updated_category)
             return category
-        raise
+        return None 
 
 # Product block
 class BaseProductUpdate(BaseModel):
@@ -107,6 +124,7 @@ class BaseProductCreate(BaseModel):
     sale_price: Optional[int]
     weight: Optional[str]
     categories: List[BaseProductCategory] = []
+
 
 class BaseProduct(BaseModel):
 #   id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
