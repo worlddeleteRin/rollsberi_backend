@@ -27,7 +27,7 @@ router = APIRouter(
 
 # categories
 @router.get("/categories")
-async def get_categories(request: Request):
+async def get_categories():
     categories_dict = db_provider.categories_db.find({})
     categories = [BaseCategory(**category).dict() for category in categories_dict]
     return {
