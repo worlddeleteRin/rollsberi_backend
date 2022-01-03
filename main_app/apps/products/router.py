@@ -4,6 +4,8 @@ import json
 
 import datetime
 
+from typing import List
+
 from pydantic import UUID4
 
 
@@ -13,7 +15,7 @@ from .models import BaseCategory, BaseCategoryCreate, BaseCategoryUpdate
 # product exceptions
 from .product_exceptions import ProductNotExist, CategoryNotExist
 # products methods
-from .products import get_product_by_id, get_category_by_id, search_products_by_name
+from .products import get_product_by_id, get_category_by_id, get_category_products_by_id, search_products_by_name
 
 from apps.users.user import get_current_admin_user
 
@@ -42,6 +44,17 @@ async def get_category(
     category = get_category_by_id(category_id)
     if category:
         return category.dict()
+
+@router.get("/categories/{category_id}/products")
+async def get_category_products(
+    category_id: UUID4,
+):
+    """
+        get products for category with [category_id]
+    """
+    category_products = get_category_products_by_id(category_id)    
+    return category_products;
+
 
 @router.post("/categories")
 async def create_category(

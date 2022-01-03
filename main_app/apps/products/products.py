@@ -5,6 +5,7 @@ from .models import BaseCategory
 from .product_exceptions import ProductNotExist, CategoryNotExist
 
 from pydantic import UUID4
+from typing import List
 
 def search_products_by_name(search_string):
     products_dict = db_provider.products_db.find(
@@ -40,3 +41,13 @@ def get_category_by_id(category_id: UUID4, silent: bool = False) -> BaseCategory
         category = BaseCategory(**category)
         return category
 
+def get_category_products_by_id(category_id: UUID4) -> list[BaseProduct]:
+    category_products_raw = db_provider.products_db.find(
+        {"categories": {
+            "$elemMatch": {
+                "_id": category_id
+            }
+        }}
+    )
+    category_products = [BaseProduct(**product) for product in category_products_raw]
+    return category_products
