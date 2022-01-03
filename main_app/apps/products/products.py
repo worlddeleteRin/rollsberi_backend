@@ -41,7 +41,7 @@ def get_category_by_id(category_id: UUID4, silent: bool = False) -> BaseCategory
         category = BaseCategory(**category)
         return category
 
-def get_category_products_by_id(category_id: UUID4) -> list[BaseProduct]:
+def get_category_products_by_id(category_id: UUID4) -> list:
     category_products_raw = db_provider.products_db.find(
         {"categories": {
             "$elemMatch": {
@@ -49,5 +49,5 @@ def get_category_products_by_id(category_id: UUID4) -> list[BaseProduct]:
             }
         }}
     )
-    category_products = [BaseProduct(**product) for product in category_products_raw]
+    category_products = [BaseProduct(**product).dict() for product in category_products_raw]
     return category_products
